@@ -139,12 +139,48 @@ liquibase-ui/
 
 **Resilient, auto-scaling deployment with high availability:**
 
-```bash
-# Quick deployment
-cd k8s && ./deploy.sh
+#### Prerequisites
+- Kubernetes cluster (1.19+)
+- kubectl configured
+- NGINX Ingress Controller
+- Cert-Manager (for SSL)
 
-# Manual deployment
+#### Quick Start
+```bash
+# 1. Clone and build
+git clone https://github.com/alsophocus/liquibase-ui.git
+cd liquibase-ui
+
+# 2. Build Docker image
+docker build -t liquibase-ui:latest .
+
+# 3. Update configuration
+# Edit k8s/secret.yaml with your credentials
+# Edit k8s/ingress.yaml with your domain
+
+# 4. Deploy to Kubernetes
+cd k8s && ./deploy.sh
+```
+
+#### Manual Deployment
+```bash
+# Apply all manifests
 kubectl apply -f k8s/
+
+# Check deployment status
+kubectl get pods -n liquibase-ui
+kubectl get svc -n liquibase-ui
+kubectl get ingress -n liquibase-ui
+```
+
+#### Access Application
+```bash
+# Port forward for testing
+kubectl port-forward svc/liquibase-ui-service 8080:80 -n liquibase-ui
+# Then open http://localhost:8080
+
+# Or access via ingress (after DNS setup)
+# https://your-domain.com
 ```
 
 **Features:**
