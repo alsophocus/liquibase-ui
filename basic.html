@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head><title>Basic Test</title></head>
+<body>
+    <div id="login">
+        <h1>LOGIN</h1>
+        <input id="u" value="admin">
+        <input id="p" value="admin">
+        <button onclick="go()">GO</button>
+    </div>
+    
+    <div id="dash" style="display:none;">
+        <h1>DASHBOARD SUCCESS!</h1>
+        <button onclick="back()">BACK</button>
+    </div>
+
+    <script>
+        function go() {
+            if (document.getElementById('u').value === 'admin' && document.getElementById('p').value === 'admin') {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('dash').style.display = 'block';
+            }
+        }
+        
+        function back() {
+            document.getElementById('dash').style.display = 'none';
+            document.getElementById('login').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

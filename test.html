@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 50px; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        input, button { padding: 10px; margin: 5px; font-size: 16px; }
+        button { background: blue; color: white; border: none; cursor: pointer; }
+        .error { color: red; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen active">
+        <h1>Login Test</h1>
+        <div>
+            <input type="text" id="username" placeholder="Username" value="admin">
+            <br>
+            <input type="password" id="password" placeholder="Password" value="admin">
+            <br>
+            <button onclick="login()">LOGIN</button>
+            <div id="error" class="error"></div>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboardScreen" class="screen">
+        <h1>🎉 DASHBOARD - LOGIN WORKED!</h1>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        function login() {
+            console.log('LOGIN CLICKED');
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('Username:', username);
+            console.log('Password:', password);
+            
+            if (username === 'admin' && password === 'admin') {
+                console.log('SUCCESS - Showing dashboard');
+                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('dashboardScreen').classList.add('active');
+            } else {
+                console.log('FAILED - Wrong credentials');
+                document.getElementById('error').textContent = 'Wrong credentials!';
+            }
+        }
+        
+        function logout() {
+            console.log('LOGOUT CLICKED');
+            document.getElementById('dashboardScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            document.getElementById('error').textContent = '';
+        }
+        
+        console.log('Test page loaded - try login with admin/admin');
+    </script>
+</body>
+</html>

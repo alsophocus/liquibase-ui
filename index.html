@@ -1,17 +1,370 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Liquibase UI</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquibase UI - Modern Database Platform</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-background">
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+        </div>
+        
+        <div class="login-container">
+            <div class="login-glass">
+                <div class="login-header">
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="logo-text">
+                            <h1>Liquibase</h1>
+                            <span>Database Evolution</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="login-form-container">
+                    <h2>Welcome back</h2>
+                    <p>Sign in to your account to continue</p>
+                    
+                    <div id="errorAlert" class="error-message hidden">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="errorText">Invalid credentials</span>
+                    </div>
+                    
+                    <div class="modern-form">
+                        <div class="input-group">
+                            <div class="input-wrapper">
+                                <i class="fas fa-user input-icon"></i>
+                                <input type="text" id="username" placeholder="Username" required value="admin">
+                                <div class="input-line"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input type="password" id="password" placeholder="Password" required value="admin">
+                                <div class="input-line"></div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="modern-button" onclick="simpleLogin()">
+                            <span class="button-content">
+                                <span class="button-text">Sign In</span>
+                                <i class="fas fa-arrow-right button-arrow"></i>
+                            </span>
+                            <div class="button-loader hidden">
+                                <div class="loader-spinner"></div>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="demo-info">
+                        <div class="demo-badge">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Demo: admin / admin</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboardScreen" class="screen">
+        <div class="app-layout">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <div class="logo-mini">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="logo-full">
+                            <span class="logo-title">Liquibase</span>
+                            <span class="logo-subtitle">Database Platform</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="nav-menu">
+                    <div class="nav-item active" data-page="dashboard">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                        <div class="nav-indicator"></div>
+                    </div>
+                    <div class="nav-item" data-page="databases">
+                        <i class="fas fa-server"></i>
+                        <span>Databases</span>
+                        <div class="nav-indicator"></div>
+                    </div>
+                    <div class="nav-item" data-page="migrations">
+                        <i class="fas fa-code-branch"></i>
+                        <span>Migrations</span>
+                        <div class="nav-indicator"></div>
+                    </div>
+                    <div class="nav-item" data-page="analytics">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Analytics</span>
+                        <div class="nav-indicator"></div>
+                    </div>
+                    <div class="nav-item" data-page="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                        <div class="nav-indicator"></div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Header -->
+                <header class="app-header">
+                    <div class="header-left">
+                        <button class="menu-toggle" id="menuToggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="page-info">
+                            <h1 id="pageTitle">Dashboard</h1>
+                            <span id="pageSubtitle">Overview of your database operations</span>
+                        </div>
+                    </div>
+                    
+                    <div class="header-right">
+                        <button class="header-action">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                        
+                        <div class="user-menu">
+                            <button class="user-avatar" id="userMenuBtn">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%236366f1'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-family='Inter' font-weight='600' font-size='16'%3EA%3C/text%3E%3C/svg%3E" alt="Admin">
+                                <div class="status-dot"></div>
+                            </button>
+                            
+                            <div class="dropdown-menu hidden" id="userDropdown">
+                                <div class="dropdown-header">
+                                    <div class="user-info">
+                                        <span class="user-name">Administrator</span>
+                                        <span class="user-email">admin@liquibase.com</span>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-item" id="logoutBtn" onclick="simpleLogout()">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Sign Out</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Dashboard Content -->
+                <div class="content-area">
+                    <div class="dashboard-grid">
+                        <!-- Stats Cards -->
+                        <div class="stats-row">
+                            <div class="stat-card" data-delay="0">
+                                <div class="stat-icon primary">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">24</div>
+                                    <div class="stat-label">Active Databases</div>
+                                    <div class="stat-change positive">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>+12%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card" data-delay="100">
+                                <div class="stat-icon success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">1,247</div>
+                                    <div class="stat-label">Successful Migrations</div>
+                                    <div class="stat-change positive">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>+8%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card" data-delay="200">
+                                <div class="stat-icon warning">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">7</div>
+                                    <div class="stat-label">Pending Reviews</div>
+                                    <div class="stat-change neutral">
+                                        <i class="fas fa-minus"></i>
+                                        <span>0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stat-card" data-delay="300">
+                                <div class="stat-icon danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value">2</div>
+                                    <div class="stat-label">Failed Migrations</div>
+                                    <div class="stat-change negative">
+                                        <i class="fas fa-arrow-down"></i>
+                                        <span>-50%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Activity Chart -->
+                        <div class="chart-card">
+                            <div class="card-header">
+                                <h3>Migration Activity</h3>
+                                <div class="chart-controls">
+                                    <button class="chart-btn active">7D</button>
+                                    <button class="chart-btn">30D</button>
+                                    <button class="chart-btn">90D</button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <div class="chart-placeholder">
+                                    <div class="chart-bars">
+                                        <div class="bar" style="height: 60%"></div>
+                                        <div class="bar" style="height: 80%"></div>
+                                        <div class="bar" style="height: 45%"></div>
+                                        <div class="bar" style="height: 90%"></div>
+                                        <div class="bar" style="height: 70%"></div>
+                                        <div class="bar" style="height: 85%"></div>
+                                        <div class="bar" style="height: 95%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div class="activity-card">
+                            <div class="card-header">
+                                <h3>Recent Activity</h3>
+                                <button class="view-all-btn">View All</button>
+                            </div>
+                            <div class="activity-list">
+                                <div class="activity-item">
+                                    <div class="activity-icon success">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Migration completed successfully</div>
+                                        <div class="activity-subtitle">Production database updated</div>
+                                    </div>
+                                    <div class="activity-time">2m ago</div>
+                                </div>
+                                
+                                <div class="activity-item">
+                                    <div class="activity-icon primary">
+                                        <i class="fas fa-play"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">New migration started</div>
+                                        <div class="activity-subtitle">Staging environment</div>
+                                    </div>
+                                    <div class="activity-time">15m ago</div>
+                                </div>
+                                
+                                <div class="activity-item">
+                                    <div class="activity-icon warning">
+                                        <i class="fas fa-exclamation"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">Review required</div>
+                                        <div class="activity-subtitle">Schema changes pending approval</div>
+                                    </div>
+                                    <div class="activity-time">1h ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // SIMPLE WORKING LOGIN
+        function simpleLogin() {
+            console.log('Login clicked');
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('Credentials:', username, password);
+            
+            if (username === 'admin' && password === 'admin') {
+                console.log('SUCCESS!');
+                
+                // Hide login, show dashboard
+                document.getElementById('loginScreen').classList.remove('active');
+                document.getElementById('dashboardScreen').classList.add('active');
+                
+                // Animate stats cards
+                setTimeout(function() {
+                    const cards = document.querySelectorAll('.stat-card');
+                    cards.forEach(function(card, i) {
+                        setTimeout(function() {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, i * 100);
+                    });
+                }, 200);
+                
+            } else {
+                console.log('FAILED');
+                document.getElementById('errorText').textContent = 'Invalid credentials';
+                document.getElementById('errorAlert').classList.remove('hidden');
+            }
+        }
+        
+        // Simple logout
+        function simpleLogout() {
+            document.getElementById('dashboardScreen').classList.remove('active');
+            document.getElementById('loginScreen').classList.add('active');
+            document.getElementById('errorAlert').classList.add('hidden');
+        }
+        
+        // Setup when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded');
+            
+            // Logout button
+            document.getElementById('logoutBtn').onclick = simpleLogout;
+            
+            // User menu toggle
+            document.getElementById('userMenuBtn').addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('userDropdown').classList.toggle('hidden');
+            });
+            
+            document.addEventListener('click', function() {
+                document.getElementById('userDropdown').classList.add('hidden');
+            });
+        });
+        
+        console.log('🔐 Ready! Use admin/admin');
+    </script>
+</body>
 </html>
