@@ -15,6 +15,8 @@ import {
   Divider,
   Avatar,
   Chip,
+  Menu,
+  MenuItem,
 } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
@@ -27,8 +29,10 @@ import {
   faDatabase,
   faBell,
   faUser,
+  faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 const drawerWidth = 280
 
@@ -42,12 +46,27 @@ const menuItems = [
 
 function Layout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [anchorEl, setAnchorEl] = useState(null)
   const theme = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
+  const { user, logout } = useAuth()
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
+  }
+
+  const handleUserMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleUserMenuClose = () => {
+    setAnchorEl(null)
+  }
+
+  const handleLogout = async () => {
+    handleUserMenuClose()
+    await logout()
   }
 
   const drawer = (
@@ -117,7 +136,7 @@ function Layout({ children }) {
           </Avatar>
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              Admin User
+              {user?.username || 'Admin User'}
             </Typography>
             <Chip 
               label="Online" 
@@ -162,6 +181,29 @@ function Layout({ children }) {
           <IconButton color="inherit" sx={{ mr: 1 }}>
             <FontAwesomeIcon icon={faBell} />
           </IconButton>
+
+          <IconButton color="inherit" onClick={handleUserMenuOpen}>
+            <FontAwesomeIcon icon={faUser} />
+          </IconButton>
+
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleUserMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem onClick={handleLogout}>
+              <FontAwesomeIcon icon={faSignOutAlt} style={{ marginRight: 8 }} />
+              Logout
+            </MenuItem>
+          </Menu>
         </Toolbar>
       </AppBar>
 

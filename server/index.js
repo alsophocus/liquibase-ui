@@ -1,206 +1,276 @@
 const express = require('express')
 const cors = require('cors')
+const helmet = require('helmet')
+const rateLimit = require('express-rate-limit')
 const dotenv = require('dotenv')
+const path = require('path')
+const fs = require('fs')
 
+// Load environment variables
 dotenv.config()
+
+// Import services and middleware
+const logger = require('./logger')
+const { authMiddleware, authenticateUser, generateToken } = require('./auth')
+const { validate } = require('./validation')
+const jenkinsService = require('./services/jenkins')
+const bitbucketService = require('./services/bitbucket')
+const liquibaseService = require('./services/liquibase')
 
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// Middleware
-app.use(cors())
-app.use(express.json())
+// Create logs directory if it doesn't exist
+if (!fs.existsSync('logs')) {
+  fs.mkdirSync('logs')
+}
 
-// Mock data for development
-const mockRepositories = [
-  {
-    id: 1,
-    name: 'user-service-db',
-    description: 'Database migrations for user service',
-    branch: 'main',
-    lastCommit: '2 hours ago',
-    author: 'John Doe',
-    changesets: 15,
-    status: 'active',
-    url: 'https://bitbucket.org/company/user-service-db',
-  },
-  // Add more mock data as needed
-]
+// Security middleware
+app.use(helmet())
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3002',
+  credentials: true
+}))
 
-const mockPipelines = [
-  {
-    id: 1,
-    name: 'Production Deployment',
-    repository: 'user-service-db',
-    status: 'running',
-    progress: 65,
-    lastRun: '5 minutes ago',
-    duration: '2m 34s',
-    triggeredBy: 'John Doe',
-    environment: 'production',
-    jenkinsUrl: 'https://jenkins.company.com/job/prod-deploy/123',
-  },
-  // Add more mock data as needed
-]
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+})
+app.use('/api', limiter)
 
-// API Routes
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ extended: true }))
 
-// Repositories
-app.get('/api/repositories', (req, res) => {
-  res.json(mockRepositories)
+// Request logging
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path}`, { ip: req.ip, userAgent: req.get('User-Agent') })
+  next()
 })
 
-app.post('/api/repositories', (req, res) => {
-  const newRepo = {
-    id: mockRepositories.length + 1,
-    ...req.body,
-    status: 'active',
-    changesets: 0,
-    lastCommit: 'Just now',
-    author: 'Current User'
-  }
-  mockRepositories.push(newRepo)
-  res.status(201).json(newRepo)
-})
-
-// Pipelines
-app.get('/api/pipelines', (req, res) => {
-  res.json(mockPipelines)
-})
-
-app.post('/api/pipelines/:id/run', (req, res) => {
-  const pipelineId = parseInt(req.params.id)
-  const pipeline = mockPipelines.find(p => p.id === pipelineId)
-  
-  if (pipeline) {
-    pipeline.status = 'running'
-    pipeline.progress = 0
-    pipeline.lastRun = 'Just now'
-    res.json(pipeline)
-  } else {
-    res.status(404).json({ error: 'Pipeline not found' })
-  }
-})
-
-app.post('/api/pipelines/:id/stop', (req, res) => {
-  const pipelineId = parseInt(req.params.id)
-  const pipeline = mockPipelines.find(p => p.id === pipelineId)
-  
-  if (pipeline) {
-    pipeline.status = 'stopped'
-    pipeline.progress = 0
-    res.json(pipeline)
-  } else {
-    res.status(404).json({ error: 'Pipeline not found' })
-  }
-})
-
-// Jenkins Integration
-app.get('/api/jenkins/jobs', async (req, res) => {
+// Authentication Routes
+app.post('/api/auth/login', validate('login'), async (req, res) => {
   try {
-    // Mock Jenkins API response
-    const jobs = [
-      { name: 'prod-deploy', status: 'success', lastBuild: 123 },
-      { name: 'staging-deploy', status: 'running', lastBuild: 456 },
-      { name: 'dev-deploy', status: 'failed', lastBuild: 789 },
-    ]
-    res.json(jobs)
+    const { username, password } = req.body
+    const user = await authenticateUser(username, password)
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' })
+    }
+
+    const token = generateToken(user)
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role } })
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch Jenkins jobs' })
+    logger.error('Login error:', error)
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 
-app.post('/api/jenkins/build/:jobName', async (req, res) => {
+app.post('/api/auth/logout', authMiddleware, (req, res) => {
+  res.json({ message: 'Logged out successfully' })
+})
+
+app.get('/api/auth/me', authMiddleware, (req, res) => {
+  res.json({ user: req.user })
+})
+
+// Repository Routes
+app.get('/api/repositories', authMiddleware, async (req, res) => {
   try {
-    const { jobName } = req.params
-    // Mock Jenkins build trigger
-    res.json({ message: `Build triggered for ${jobName}`, buildNumber: Math.floor(Math.random() * 1000) })
+    const repositories = await bitbucketService.getRepositories()
+    res.json(repositories)
   } catch (error) {
-    res.status(500).json({ error: 'Failed to trigger Jenkins build' })
+    logger.error('Failed to fetch repositories:', error)
+    res.status(500).json({ error: error.message })
   }
 })
 
-// Bitbucket Integration
-app.get('/api/bitbucket/repositories', async (req, res) => {
+app.post('/api/repositories', authMiddleware, validate('repository'), async (req, res) => {
   try {
-    // Mock Bitbucket API response
-    const repositories = [
-      { name: 'user-service-db', full_name: 'company/user-service-db', clone_links: [] },
-      { name: 'payment-db-migrations', full_name: 'company/payment-db-migrations', clone_links: [] },
-    ]
-    res.json({ values: repositories })
+    const { name, url, branch } = req.body
+    // In production, save to database
+    const repository = { id: Date.now(), name, url, branch, createdAt: new Date() }
+    res.status(201).json(repository)
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch Bitbucket repositories' })
+    logger.error('Failed to create repository:', error)
+    res.status(500).json({ error: error.message })
   }
 })
 
-app.get('/api/bitbucket/repositories/:repo/branches', async (req, res) => {
+app.get('/api/repositories/:repo/branches', authMiddleware, async (req, res) => {
   try {
     const { repo } = req.params
-    // Mock Bitbucket branches response
-    const branches = [
-      { name: 'main', target: { hash: 'abc123' } },
-      { name: 'develop', target: { hash: 'def456' } },
-      { name: 'feature/new-migration', target: { hash: 'ghi789' } },
-    ]
-    res.json({ values: branches })
+    const branches = await bitbucketService.getBranches(repo)
+    res.json(branches)
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch repository branches' })
+    logger.error('Failed to fetch branches:', error)
+    res.status(500).json({ error: error.message })
   }
 })
 
-// Liquibase Operations
-app.post('/api/liquibase/update', async (req, res) => {
+// Pipeline Routes
+app.get('/api/pipelines', authMiddleware, async (req, res) => {
+  try {
+    const jobs = await jenkinsService.getJobs()
+    res.json(jobs)
+  } catch (error) {
+    logger.error('Failed to fetch pipelines:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/pipelines/:id/run', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { parameters } = req.body
+    const result = await jenkinsService.buildJob(id, parameters)
+    res.json(result)
+  } catch (error) {
+    logger.error('Failed to run pipeline:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.get('/api/pipelines/:job/:build/status', authMiddleware, async (req, res) => {
+  try {
+    const { job, build } = req.params
+    const status = await jenkinsService.getBuildStatus(job, build)
+    res.json(status)
+  } catch (error) {
+    logger.error('Failed to get build status:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.get('/api/pipelines/:job/:build/logs', authMiddleware, async (req, res) => {
+  try {
+    const { job, build } = req.params
+    const logs = await jenkinsService.getBuildLog(job, build)
+    res.json({ logs })
+  } catch (error) {
+    logger.error('Failed to get build logs:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// Environment Routes
+app.get('/api/environments', authMiddleware, async (req, res) => {
+  try {
+    // In production, fetch from database
+    const environments = [
+      {
+        id: 1,
+        name: 'Production',
+        dbType: 'postgresql',
+        host: process.env.PROD_DB_HOST,
+        port: process.env.PROD_DB_PORT,
+        database: process.env.PROD_DB_NAME
+      }
+    ]
+    res.json(environments)
+  } catch (error) {
+    logger.error('Failed to fetch environments:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/environments', authMiddleware, validate('environment'), async (req, res) => {
+  try {
+    const environment = { id: Date.now(), ...req.body, createdAt: new Date() }
+    // In production, save to database
+    res.status(201).json(environment)
+  } catch (error) {
+    logger.error('Failed to create environment:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// Liquibase Routes
+app.post('/api/liquibase/update', authMiddleware, validate('migration'), async (req, res) => {
   try {
     const { environment, changelogFile, contexts } = req.body
-    // Mock Liquibase update operation
-    res.json({ 
-      message: 'Migration completed successfully',
-      changesetsExecuted: 3,
-      duration: '1m 23s'
-    })
+    // Get environment config from database
+    const dbConfig = {
+      type: 'postgresql',
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_NAME,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD
+    }
+    
+    const result = await liquibaseService.update(dbConfig, changelogFile, contexts)
+    res.json(result)
   } catch (error) {
-    res.status(500).json({ error: 'Migration failed' })
+    logger.error('Migration failed:', error)
+    res.status(500).json({ error: error.message })
   }
 })
 
-app.post('/api/liquibase/rollback', async (req, res) => {
+app.post('/api/liquibase/rollback', authMiddleware, validate('rollback'), async (req, res) => {
   try {
-    const { environment, tag } = req.body
-    // Mock Liquibase rollback operation
-    res.json({ 
-      message: 'Rollback completed successfully',
-      changesetsRolledBack: 2,
-      duration: '45s'
-    })
+    const { environment, changelogFile, tag } = req.body
+    const dbConfig = {
+      type: 'postgresql',
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_NAME,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD
+    }
+    
+    const result = await liquibaseService.rollback(dbConfig, changelogFile, tag)
+    res.json(result)
   } catch (error) {
-    res.status(500).json({ error: 'Rollback failed' })
+    logger.error('Rollback failed:', error)
+    res.status(500).json({ error: error.message })
   }
 })
 
-app.get('/api/liquibase/status/:environment', async (req, res) => {
+app.get('/api/liquibase/status/:environment', authMiddleware, async (req, res) => {
   try {
     const { environment } = req.params
-    // Mock Liquibase status
-    res.json({
-      environment,
-      pendingChangesets: Math.floor(Math.random() * 10),
-      lastMigration: new Date().toISOString(),
-      currentVersion: 'v2.1.5'
-    })
+    const dbConfig = {
+      type: 'postgresql',
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_NAME,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD
+    }
+    
+    const changelogFile = process.env.LIQUIBASE_CHANGELOG_PATH || 'db/changelog/db.changelog-master.xml'
+    const result = await liquibaseService.status(dbConfig, changelogFile)
+    res.json(result)
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get migration status' })
+    logger.error('Failed to get migration status:', error)
+    res.status(500).json({ error: error.message })
   }
 })
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() })
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '1.0.0'
+  })
 })
+
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../dist')))
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'))
+  })
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack)
+  logger.error('Unhandled error:', err)
   res.status(500).json({ error: 'Something went wrong!' })
 })
 
@@ -209,7 +279,18 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' })
 })
 
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully')
+  process.exit(0)
+})
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully')
+  process.exit(0)
+})
+
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-  console.log(`API available at http://localhost:${PORT}/api`)
+  logger.info(`Server running on port ${PORT}`)
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)
 })
