@@ -1,294 +1,325 @@
 # Liquibase UI
 
-A modern web-based user interface for managing Liquibase database migrations with Jenkins and Bitbucket integration.
+Enterprise-grade web interface for managing Liquibase database migrations with Jenkins and Bitbucket integration. Built with SOLID principles, Material Design 3, and production-ready Kubernetes deployment.
 
-## Features
+## 🚀 Quick Start (Kubernetes)
 
-- **Dashboard**: Overview of migration status across environments
-- **Repository Management**: Integration with Bitbucket for changelog management
-- **Pipeline Management**: Jenkins integration for automated deployments
-- **Environment Monitoring**: Real-time status of database environments
-- **Material Design 3**: Modern, responsive UI with smooth animations
-- **Font Awesome Icons**: Comprehensive icon set for better UX
+Deploy the complete stack with one command:
 
-## Tech Stack
-
-- **Frontend**: React 18, Material-UI 5, Vite
-- **Backend**: Node.js, Express
-- **Integrations**: Jenkins REST API, Bitbucket REST API
-- **Design**: Material Design 3, Font Awesome
-
-## Prerequisites
-
-- Node.js 16+ and npm
-- Jenkins server with REST API access
-- Bitbucket workspace with API access
-- Liquibase CLI installed (for actual migrations)
-
-## Installation
-
-1. **Clone and install dependencies**:
-   ```bash
-   cd ~/Desktop/liquibase-ui
-   npm install
-   ```
-
-2. **Configure environment**:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your Jenkins and Bitbucket credentials
-   ```
-
-3. **Start development servers**:
-   ```bash
-   # Terminal 1: Start backend server
-   npm run start
-
-   # Terminal 2: Start frontend development server
-   npm run dev
-   ```
-
-4. **Access the application**:
-   - Frontend: http://localhost:3002
-   - Backend API: http://localhost:3001/api
-
-## Configuration
-
-### Jenkins Integration
-
-1. Generate an API token in Jenkins (User → Configure → API Token)
-2. Update `.env` with your Jenkins URL, username, and token
-3. Ensure Jenkins has the necessary plugins for REST API access
-
-### Bitbucket Integration
-
-1. Create an App Password in Bitbucket (Settings → App passwords)
-2. Grant repository read/write permissions
-3. Update `.env` with your Bitbucket credentials and workspace
-
-### Liquibase Setup
-
-1. Install Liquibase CLI on your system
-2. Configure database connections in your environment
-3. Set up changelog files in your repositories
-
-## API Endpoints
-
-### Repositories
-- `GET /api/repositories` - List all repositories
-- `POST /api/repositories` - Add new repository
-
-### Pipelines
-- `GET /api/pipelines` - List all pipelines
-- `POST /api/pipelines/:id/run` - Run pipeline
-- `POST /api/pipelines/:id/stop` - Stop pipeline
-
-### Jenkins Integration
-- `GET /api/jenkins/jobs` - List Jenkins jobs
-- `POST /api/jenkins/build/:jobName` - Trigger Jenkins build
-
-### Bitbucket Integration
-- `GET /api/bitbucket/repositories` - List Bitbucket repositories
-- `GET /api/bitbucket/repositories/:repo/branches` - List repository branches
-
-### Liquibase Operations
-- `POST /api/liquibase/update` - Run migration
-- `POST /api/liquibase/rollback` - Rollback migration
-- `GET /api/liquibase/status/:environment` - Get migration status
-
-## Project Structure
-
-```
-liquibase-ui/
-├── src/
-│   ├── components/          # Reusable React components
-│   │   └── Layout.jsx      # Main layout with navigation
-│   ├── pages/              # Page components
-│   │   ├── Dashboard.jsx   # Dashboard overview
-│   │   ├── Repositories.jsx # Repository management
-│   │   ├── Pipelines.jsx   # Pipeline management
-│   │   ├── Environments.jsx # Environment monitoring
-│   │   └── Settings.jsx    # Configuration settings
-│   ├── theme.js            # Material Design 3 theme
-│   ├── App.jsx             # Main application component
-│   └── main.jsx            # Application entry point
-├── server/
-│   └── index.js            # Express server with API routes
-├── package.json            # Dependencies and scripts
-└── vite.config.js          # Vite configuration
-```
-
-## Development
-
-### Adding New Features
-
-1. **Frontend Components**: Add new components in `src/components/`
-2. **Pages**: Add new pages in `src/pages/` and update routing in `App.jsx`
-3. **API Endpoints**: Add new routes in `server/index.js`
-4. **Styling**: Follow Material Design 3 principles and use the theme system
-
-### Customization
-
-- **Theme**: Modify `src/theme.js` for custom colors and typography
-- **Icons**: Use Font Awesome icons throughout the application
-- **Animations**: CSS animations are defined in `src/index.css`
-
-## Production Deployment
-
-### Kubernetes with Helm (Recommended)
-
-**Easy, configurable deployment with Helm chart:**
-
-#### Prerequisites
-- Kubernetes cluster (1.19+)
-- Helm 3.0+
-- NGINX Ingress Controller
-- Cert-Manager (for SSL)
-
-#### Quick Start
 ```bash
-# Install with default values
-helm install liquibase-ui ./helm/liquibase-ui
+# Clone repository
+git clone https://github.com/alsophocus/liquibase-ui.git
+cd liquibase-ui
 
-# Or with production values
+# Deploy with Helm (Recommended)
+helm install liquibase-ui ./helm/liquibase-ui \
+  --create-namespace \
+  --namespace liquibase-ui
+
+# Access the application
+kubectl port-forward svc/liquibase-ui 8080:80 -n liquibase-ui
+# Open http://localhost:8080
+```
+
+## 📦 What Gets Installed
+
+### Core Application Stack
+- **Liquibase UI** (React + Node.js) - 3 replicas with auto-scaling
+- **PostgreSQL Database** - Persistent storage with StatefulSet
+- **NGINX Ingress** - SSL termination and load balancing
+- **SSL Certificates** - Automatic Let's Encrypt certificates
+
+### Integrated Services
+- **Jenkins Integration** - Pipeline management and build automation
+- **Bitbucket Integration** - Repository and branch management
+- **Liquibase CLI** - Database migration execution
+- **Prometheus Monitoring** - Metrics collection and alerting
+
+### Kubernetes Resources
+```yaml
+# Deployed Resources:
+- Namespace: liquibase-ui
+- Deployment: liquibase-ui (3+ replicas)
+- StatefulSet: postgresql
+- Services: liquibase-ui-service, postgresql-service
+- Ingress: SSL-enabled with automatic certificates
+- HPA: Auto-scaling 3-10 pods based on CPU/memory
+- PDB: Pod disruption budget for high availability
+- NetworkPolicy: Security policies
+- ServiceMonitor: Prometheus metrics
+- Secrets: Encrypted configuration storage
+- ConfigMaps: Application configuration
+```
+
+## 🛠️ Prerequisites
+
+### Required
+- **Kubernetes 1.19+** (EKS, GKE, AKS, or on-premises)
+- **Helm 3.0+** for package management
+- **kubectl** configured for your cluster
+
+### Recommended Add-ons
+- **NGINX Ingress Controller**
+  ```bash
+  helm upgrade --install ingress-nginx ingress-nginx \
+    --repo https://kubernetes.github.io/ingress-nginx \
+    --namespace ingress-nginx --create-namespace
+  ```
+
+- **Cert-Manager** (for SSL certificates)
+  ```bash
+  helm install cert-manager jetstack/cert-manager \
+    --namespace cert-manager --create-namespace \
+    --set installCRDs=true
+  ```
+
+- **Prometheus Operator** (for monitoring)
+  ```bash
+  helm install prometheus prometheus-community/kube-prometheus-stack \
+    --namespace monitoring --create-namespace
+  ```
+
+## 🔧 Configuration
+
+### 1. Basic Installation
+```bash
+# Install with default settings
+helm install liquibase-ui ./helm/liquibase-ui
+```
+
+### 2. Production Installation
+```bash
+# Use production values
 helm install liquibase-ui ./helm/liquibase-ui \
   --namespace liquibase-ui \
   --create-namespace \
   --values ./helm/liquibase-ui/values-production.yaml
 ```
 
-#### Custom Configuration
+### 3. Custom Configuration
 ```bash
-# Install with custom settings
+# Customize domain and scaling
 helm install liquibase-ui ./helm/liquibase-ui \
-  --set ingress.hosts[0].host=liquibase.your-domain.com \
-  --set secrets.jenkinsUrl=https://jenkins.your-company.com \
-  --set autoscaling.maxReplicas=20
+  --set ingress.hosts[0].host=liquibase.your-company.com \
+  --set autoscaling.maxReplicas=20 \
+  --set postgresql.primary.persistence.size=100Gi
 ```
 
-#### Management
+### 4. External Services
 ```bash
-# Upgrade
-helm upgrade liquibase-ui ./helm/liquibase-ui
-
-# Check status
-helm status liquibase-ui
-
-# Uninstall
-helm uninstall liquibase-ui
+# Use external PostgreSQL
+helm install liquibase-ui ./helm/liquibase-ui \
+  --set postgresql.enabled=false \
+  --set externalDatabase.host=your-postgres.com \
+  --set externalDatabase.database=liquibase_ui
 ```
 
-See [helm/README.md](helm/README.md) for detailed configuration options.
+## 🌐 Access Methods
 
-### Kubernetes (Manual)
-
-**Resilient, auto-scaling deployment with high availability:**
-
-#### Prerequisites
-- Kubernetes cluster (1.19+)
-- kubectl configured
-- NGINX Ingress Controller
-- Cert-Manager (for SSL)
-
-#### Quick Start
+### 1. Port Forward (Development)
 ```bash
-# 1. Clone and build
-git clone https://github.com/alsophocus/liquibase-ui.git
-cd liquibase-ui
-
-# 2. Build Docker image
-docker build -t liquibase-ui:latest .
-
-# 3. Update configuration
-# Edit k8s/secret.yaml with your credentials
-# Edit k8s/ingress.yaml with your domain
-
-# 4. Deploy to Kubernetes
-cd k8s && ./deploy.sh
+kubectl port-forward svc/liquibase-ui 8080:80 -n liquibase-ui
+# Access: http://localhost:8080
 ```
 
-#### Manual Deployment
+### 2. Ingress (Production)
 ```bash
-# Apply all manifests
-kubectl apply -f k8s/
+# Configure your domain in values.yaml
+ingress:
+  hosts:
+    - host: liquibase.your-company.com
+# Access: https://liquibase.your-company.com
+```
 
-# Check deployment status
+### 3. Load Balancer
+```bash
+# Change service type to LoadBalancer
+helm upgrade liquibase-ui ./helm/liquibase-ui \
+  --set service.type=LoadBalancer
+```
+
+## 🔐 Default Credentials
+
+- **Username**: `admin`
+- **Password**: `password`
+
+⚠️ **Change default credentials in production!**
+
+## 📊 Monitoring & Management
+
+### Check Deployment Status
+```bash
+# Overall status
+helm status liquibase-ui -n liquibase-ui
+
+# Pod status
 kubectl get pods -n liquibase-ui
-kubectl get svc -n liquibase-ui
+
+# Auto-scaling status
+kubectl get hpa -n liquibase-ui
+
+# Ingress status
 kubectl get ingress -n liquibase-ui
 ```
 
-#### Access Application
+### View Logs
 ```bash
-# Port forward for testing
-kubectl port-forward svc/liquibase-ui-service 8080:80 -n liquibase-ui
-# Then open http://localhost:8080
+# Application logs
+kubectl logs -n liquibase-ui -l app.kubernetes.io/name=liquibase-ui -f
 
-# Or access via ingress (after DNS setup)
-# https://your-domain.com
+# Database logs
+kubectl logs -n liquibase-ui -l app.kubernetes.io/name=postgresql -f
 ```
 
-**Features:**
-- ✅ High availability (3+ replicas with anti-affinity)
-- ✅ Auto-scaling (3-10 pods based on CPU/memory)  
-- ✅ Zero-downtime rolling updates
-- ✅ SSL termination with automatic certificates
-- ✅ Network security policies
-- ✅ Prometheus monitoring integration
-- ✅ Pod disruption budgets for resilience
+### Scale Manually
+```bash
+# Scale to 5 replicas
+kubectl scale deployment liquibase-ui --replicas=5 -n liquibase-ui
 
-See [k8s/README.md](k8s/README.md) for detailed instructions.
+# Or via Helm
+helm upgrade liquibase-ui ./helm/liquibase-ui \
+  --set replicaCount=5
+```
 
-### Docker Deployment
+## 🔄 Updates & Maintenance
 
-1. **Build the application**:
+### Upgrade Application
+```bash
+# Update to new version
+helm upgrade liquibase-ui ./helm/liquibase-ui \
+  --set image.tag=v2.0.0
+
+# Check rollout status
+kubectl rollout status deployment/liquibase-ui -n liquibase-ui
+```
+
+### Rollback
+```bash
+# Rollback to previous version
+helm rollback liquibase-ui -n liquibase-ui
+
+# Or specific revision
+helm rollback liquibase-ui 1 -n liquibase-ui
+```
+
+### Backup Database
+```bash
+# Create backup
+kubectl exec -n liquibase-ui liquibase-ui-postgresql-0 -- \
+  pg_dump -U liquibase liquibase_ui > backup-$(date +%Y%m%d).sql
+```
+
+## 🏗️ Architecture
+
+### High Availability Features
+- **Multi-replica deployment** with pod anti-affinity
+- **Auto-scaling** based on CPU and memory usage
+- **Rolling updates** with zero downtime
+- **Pod disruption budgets** ensure minimum availability
+- **Health checks** with automatic restart on failure
+
+### Security Features
+- **Network policies** restrict inter-pod communication
+- **Non-root containers** with security contexts
+- **Encrypted secrets** for sensitive configuration
+- **SSL/TLS termination** with automatic certificates
+- **Rate limiting** and security headers
+
+### Scalability Features
+- **Horizontal pod autoscaler** (3-10 pods default)
+- **Persistent storage** with StatefulSets
+- **Load balancing** across multiple replicas
+- **Resource limits** prevent resource exhaustion
+
+## 🔧 Configuration Options
+
+### Key Helm Values
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `replicaCount` | Number of app replicas | `3` |
+| `image.tag` | Application image tag | `latest` |
+| `ingress.enabled` | Enable ingress | `true` |
+| `ingress.hosts[0].host` | Application hostname | `liquibase.example.com` |
+| `autoscaling.enabled` | Enable auto-scaling | `true` |
+| `autoscaling.minReplicas` | Minimum replicas | `3` |
+| `autoscaling.maxReplicas` | Maximum replicas | `10` |
+| `postgresql.enabled` | Enable PostgreSQL | `true` |
+| `postgresql.primary.persistence.size` | Database storage | `10Gi` |
+| `monitoring.enabled` | Enable monitoring | `true` |
+| `networkPolicy.enabled` | Enable network policies | `true` |
+
+### Environment-Specific Values
+- **Development**: `values.yaml` (default)
+- **Production**: `values-production.yaml`
+- **Custom**: Create your own values file
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **Pods not starting**
    ```bash
-   npm run build
+   kubectl describe pod <pod-name> -n liquibase-ui
+   kubectl logs <pod-name> -n liquibase-ui
    ```
 
-2. **Deploy with Docker Compose**:
+2. **Database connection issues**
    ```bash
-   npm run docker:compose
+   kubectl logs -n liquibase-ui -l app.kubernetes.io/name=postgresql
+   kubectl exec -it liquibase-ui-postgresql-0 -n liquibase-ui -- psql -U liquibase
    ```
 
-### Manual Deployment
-
-1. **Build the application**:
+3. **Ingress not working**
    ```bash
-   npm run build
+   kubectl describe ingress liquibase-ui -n liquibase-ui
+   kubectl get events -n liquibase-ui --sort-by='.lastTimestamp'
    ```
 
-2. **Deploy backend**:
-   - Deploy `server/index.js` to your Node.js hosting platform
-   - Set production environment variables
+4. **Auto-scaling not working**
+   ```bash
+   kubectl describe hpa liquibase-ui -n liquibase-ui
+   kubectl top pods -n liquibase-ui
+   ```
 
-3. **Deploy frontend**:
-   - Deploy the `dist/` folder to a static hosting service
-   - Update API endpoints to point to production backend
+### Debug Commands
+```bash
+# Get into application pod
+kubectl exec -it <pod-name> -n liquibase-ui -- /bin/sh
 
-## Security Considerations
+# Check resource usage
+kubectl top pods -n liquibase-ui
+kubectl top nodes
 
-- Store sensitive credentials in environment variables
-- Use HTTPS in production
-- Implement proper authentication and authorization
-- Validate all API inputs
-- Use secure headers and CORS configuration
+# View all resources
+kubectl get all -n liquibase-ui
+```
 
-## Contributing
+## 🗑️ Uninstall
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes following the existing code style
-4. Test your changes thoroughly
-5. Submit a pull request
+```bash
+# Remove application
+helm uninstall liquibase-ui -n liquibase-ui
 
-## License
+# Remove namespace (optional)
+kubectl delete namespace liquibase-ui
 
-This project is licensed under the MIT License.
+# Remove persistent volumes (if needed)
+kubectl delete pvc -n liquibase-ui --all
+```
 
-## Support
+## 📚 Additional Resources
 
-For issues and questions:
-1. Check the existing issues in the repository
-2. Create a new issue with detailed information
-3. Include steps to reproduce any bugs
+- **Helm Chart Documentation**: [helm/README.md](helm/README.md)
+- **Kubernetes Manifests**: [k8s/](k8s/)
+- **Deployment Guide**: [DEPLOYMENT.md](DEPLOYMENT.md)
+- **API Documentation**: Available at `/api/health` endpoint
+
+## 🤝 Support
+
+- **Issues**: [GitHub Issues](https://github.com/alsophocus/liquibase-ui/issues)
+- **Documentation**: [Wiki](https://github.com/alsophocus/liquibase-ui/wiki)
+- **Discussions**: [GitHub Discussions](https://github.com/alsophocus/liquibase-ui/discussions)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
