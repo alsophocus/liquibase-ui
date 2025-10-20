@@ -135,6 +135,43 @@ liquibase-ui/
 
 ## Production Deployment
 
+### Kubernetes (Recommended)
+
+**Resilient, auto-scaling deployment with high availability:**
+
+```bash
+# Quick deployment
+cd k8s && ./deploy.sh
+
+# Manual deployment
+kubectl apply -f k8s/
+```
+
+**Features:**
+- ✅ High availability (3+ replicas with anti-affinity)
+- ✅ Auto-scaling (3-10 pods based on CPU/memory)  
+- ✅ Zero-downtime rolling updates
+- ✅ SSL termination with automatic certificates
+- ✅ Network security policies
+- ✅ Prometheus monitoring integration
+- ✅ Pod disruption budgets for resilience
+
+See [k8s/README.md](k8s/README.md) for detailed instructions.
+
+### Docker Deployment
+
+1. **Build the application**:
+   ```bash
+   npm run build
+   ```
+
+2. **Deploy with Docker Compose**:
+   ```bash
+   npm run docker:compose
+   ```
+
+### Manual Deployment
+
 1. **Build the application**:
    ```bash
    npm run build

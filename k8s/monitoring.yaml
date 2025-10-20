@@ -1,0 +1,31 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: liquibase-ui-metrics
+  namespace: liquibase-ui
+  labels:
+    app: liquibase-ui
+spec:
+  selector:
+    matchLabels:
+      app: liquibase-ui
+  endpoints:
+  - port: http
+    path: /api/health
+    interval: 30s
+    scrapeTimeout: 10s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: liquibase-ui-metrics
+  namespace: liquibase-ui
+  labels:
+    app: liquibase-ui
+spec:
+  selector:
+    app: liquibase-ui
+  ports:
+  - port: 3001
+    targetPort: 3001
+    name: http

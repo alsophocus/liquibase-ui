@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: liquibase-ui-service
+  namespace: liquibase-ui
+  labels:
+    app: liquibase-ui
+spec:
+  selector:
+    app: liquibase-ui
+  ports:
+  - port: 80
+    targetPort: 3001
+    protocol: TCP
+    name: http
+  type: ClusterIP
+  sessionAffinity: None
