@@ -1,0 +1,83 @@
+# Production values for liquibase-ui
+replicaCount: 5
+
+image:
+  repository: your-registry/liquibase-ui
+  pullPolicy: Always
+  tag: "latest"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "200"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  hosts:
+    - host: liquibase.your-company.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: liquibase-ui-tls
+      hosts:
+        - liquibase.your-company.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+
+config:
+  logLevel: warn
+
+secrets:
+  jwtSecret: "production-jwt-secret-very-secure"
+  jenkinsUrl: "https://jenkins.your-company.com"
+  jenkinsUsername: "liquibase-prod"
+  jenkinsToken: "production_jenkins_token"
+  bitbucketUsername: "prod_bitbucket_user"
+  bitbucketAppPassword: "production_app_password"
+  bitbucketWorkspace: "your_company"
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "secure_postgres_password"
+    username: "liquibase_prod"
+    password: "secure_liquibase_password"
+    database: "liquibase_ui_prod"
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: "fast-ssd"
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+
+nodeSelector:
+  node-type: "production"
+
+tolerations:
+  - key: "production"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"

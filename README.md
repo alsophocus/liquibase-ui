@@ -135,7 +135,52 @@ liquibase-ui/
 
 ## Production Deployment
 
-### Kubernetes (Recommended)
+### Kubernetes with Helm (Recommended)
+
+**Easy, configurable deployment with Helm chart:**
+
+#### Prerequisites
+- Kubernetes cluster (1.19+)
+- Helm 3.0+
+- NGINX Ingress Controller
+- Cert-Manager (for SSL)
+
+#### Quick Start
+```bash
+# Install with default values
+helm install liquibase-ui ./helm/liquibase-ui
+
+# Or with production values
+helm install liquibase-ui ./helm/liquibase-ui \
+  --namespace liquibase-ui \
+  --create-namespace \
+  --values ./helm/liquibase-ui/values-production.yaml
+```
+
+#### Custom Configuration
+```bash
+# Install with custom settings
+helm install liquibase-ui ./helm/liquibase-ui \
+  --set ingress.hosts[0].host=liquibase.your-domain.com \
+  --set secrets.jenkinsUrl=https://jenkins.your-company.com \
+  --set autoscaling.maxReplicas=20
+```
+
+#### Management
+```bash
+# Upgrade
+helm upgrade liquibase-ui ./helm/liquibase-ui
+
+# Check status
+helm status liquibase-ui
+
+# Uninstall
+helm uninstall liquibase-ui
+```
+
+See [helm/README.md](helm/README.md) for detailed configuration options.
+
+### Kubernetes (Manual)
 
 **Resilient, auto-scaling deployment with high availability:**
 

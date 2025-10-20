@@ -1,0 +1,18 @@
+apiVersion: v2
+name: liquibase-ui
+description: A Helm chart for Liquibase UI with Jenkins and Bitbucket integration
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - liquibase
+  - database
+  - migration
+  - jenkins
+  - bitbucket
+home: https://github.com/alsophocus/liquibase-ui
+sources:
+  - https://github.com/alsophocus/liquibase-ui
+maintainers:
+  - name: Liquibase UI Team
+    email: admin@example.com

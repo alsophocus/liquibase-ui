@@ -1,0 +1,17 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "liquibase-ui.fullname" . }}
+  labels:
+    {{- include "liquibase-ui.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "liquibase-ui.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: http
+    path: /api/health
+    interval: {{ .Values.monitoring.serviceMonitor.interval }}
+    scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
+{{- end }}

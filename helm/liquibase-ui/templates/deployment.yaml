@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "liquibase-ui.fullname" . }}
+  labels:
+    {{- include "liquibase-ui.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "liquibase-ui.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "liquibase-ui.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "liquibase-ui.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.config.port }}
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.config.nodeEnv }}
+            - name: PORT
+              value: "{{ .Values.config.port }}"
+            - name: LOG_LEVEL
+              value: {{ .Values.config.logLevel }}
+            - name: BITBUCKET_URL
+              value: {{ .Values.config.bitbucketUrl }}
+            - name: LIQUIBASE_PATH
+              value: {{ .Values.config.liquibasePath }}
+            - name: LIQUIBASE_CHANGELOG_PATH
+              value: {{ .Values.config.liquibaseChangelogPath }}
+            - name: LIQUIBASE_CONTEXTS
+              value: {{ .Values.config.liquibaseContexts }}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "liquibase-ui.fullname" . }}-secrets
+                  key: jwt-secret
+            - name: JENKINS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "liquibase-ui.fullname" . }}-secrets
+                  key: jenkins-url
+            - name: JENKINS_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "liquibase-ui.fullname" . }}-secrets
+                  key: jenkins-username
+            - name: JENKINS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "liquibase-ui.fullname" . }}-secrets
+                  key: jenkins-token
+            - name: BITBUCKET_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "liquibase-ui.fullname" . }}-secrets
+                  key: bitbucket-username
+            - name: BITBUCKET_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "liquibase-ui.fullname" . }}-secrets
+                  key: bitbucket-app-password
+            - name: BITBUCKET_WORKSPACE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "liquibase-ui.fullname" . }}-secrets
+                  key: bitbucket-workspace
+            {{- if .Values.postgresql.enabled }}
+            - name: DB_HOST
+              value: {{ include "liquibase-ui.fullname" . }}-postgresql
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: {{ .Values.postgresql.auth.database }}
+            - name: DB_USERNAME
+              value: {{ .Values.postgresql.auth.username }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "liquibase-ui.fullname" . }}-postgresql
+                  key: password
+            {{- end }}
+          {{- if .Values.healthCheck.enabled }}
+          livenessProbe:
+            {{- toYaml .Values.healthCheck.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.healthCheck.readinessProbe | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: logs
+              mountPath: /app/logs
+      volumes:
+        - name: logs
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
