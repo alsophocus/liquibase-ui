@@ -38,6 +38,8 @@ const drawerWidth = 280
 
 const menuItems = [
   { text: 'Dashboard', icon: faTachometerAlt, path: '/' },
+  { text: 'Migrations', icon: faDatabase, path: '/migrations' },
+  { text: 'Connections', icon: faServer, path: '/connections' },
   { text: 'Repositories', icon: faCodeBranch, path: '/repositories' },
   { text: 'Pipelines', icon: faCogs, path: '/pipelines' },
   { text: 'Environments', icon: faServer, path: '/environments' },

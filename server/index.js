@@ -26,7 +26,7 @@ const liquibaseService = container.resolve('liquibaseService')
 const samlService = container.resolve('samlService')
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 3000
 
 // Create logs directory if it doesn't exist
 if (!fs.existsSync('logs')) {
@@ -286,14 +286,19 @@ app.get('/api/health', (req, res) => {
   })
 })
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../dist')))
+// Serve static files
+app.use(express.static(path.join(__dirname, '../dist')))
+
+// Catch-all handler for React Router
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api') || req.path.startsWith('/auth')) {
+    return res.status(404).json({ error: 'Route not found' })
+  }
   
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'))
-  })
-}
+  // Serve React app
+  res.sendFile(path.join(__dirname, '../dist/index.html'))
+})
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -1,0 +1,36 @@
+# Production stage
+FROM node:18-alpine
+
+# Install Liquibase
+RUN apk add --no-cache openjdk11-jre wget && \
+    wget -O liquibase.tar.gz https://github.com/liquibase/liquibase/releases/download/v4.25.0/liquibase-4.25.0.tar.gz && \
+    mkdir /opt/liquibase && \
+    tar -xzf liquibase.tar.gz -C /opt/liquibase && \
+    ln -s /opt/liquibase/liquibase /usr/local/bin/liquibase && \
+    rm liquibase.tar.gz
+
+WORKDIR /app
+
+# Create user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S liquibase -u 1001
+
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm ci --only=production
+
+# Copy pre-built frontend
+COPY dist ./dist
+
+# Copy server files
+COPY server ./server
+
+# Change ownership
+RUN chown -R liquibase:nodejs /app
+USER liquibase
+
+EXPOSE 3000
+
+CMD ["node", "server/index.js"]

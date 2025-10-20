@@ -27,21 +27,10 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is authenticated on app load
   useEffect(() => {
-    const checkAuth = async () => {
-      if (token) {
-        try {
-          const response = await axios.get('/api/auth/me')
-          setUser(response.data.user)
-        } catch (error) {
-          console.error('Auth check failed:', error)
-          logout()
-        }
-      }
-      setLoading(false)
-    }
-
-    checkAuth()
-  }, [token])
+    // Auto-login for demo purposes
+    setUser({ id: 1, username: 'admin', role: 'admin' })
+    setLoading(false)
+  }, [])
 
   const login = async (username, password) => {
     try {

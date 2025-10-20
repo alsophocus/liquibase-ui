@@ -1,0 +1,44 @@
+FROM node:18-alpine
+
+# Install Liquibase
+RUN apk add --no-cache openjdk11-jre wget && \
+    wget -O liquibase.tar.gz https://github.com/liquibase/liquibase/releases/download/v4.25.0/liquibase-4.25.0.tar.gz && \
+    mkdir /opt/liquibase && \
+    tar -xzf liquibase.tar.gz -C /opt/liquibase && \
+    ln -s /opt/liquibase/liquibase /usr/local/bin/liquibase && \
+    rm liquibase.tar.gz
+
+# Create app directory
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S liquibase -u 1001
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code and dist folder
+COPY . .
+
+# Ensure dist folder exists
+RUN mkdir -p dist
+
+# Build frontend (skip for now to avoid ARM64 issues)
+# RUN npm run build
+
+# Create logs and config directories with proper permissions
+RUN mkdir -p logs server/config && \
+    chown -R liquibase:nodejs logs server/config
+
+# Switch to non-root user
+USER liquibase
+
+# Expose port
+EXPOSE 3001
+
+# Start the application
+CMD ["node", "server/index.js"]
