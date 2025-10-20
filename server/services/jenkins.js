@@ -1,21 +1,39 @@
 const axios = require('axios')
 const logger = require('../logger')
+const configService = require('./config')
 
 class JenkinsService {
-  constructor() {
-    this.baseURL = process.env.JENKINS_URL
-    this.username = process.env.JENKINS_USERNAME
-    this.token = process.env.JENKINS_TOKEN
-    this.auth = {
-      username: this.username,
-      password: this.token
+  getConfig() {
+    return configService.getJenkinsConfig()
+  }
+
+  async testConnection() {
+    const config = this.getConfig()
+    if (!config.enabled || !config.url) {
+      throw new Error('Jenkins not configured')
+    }
+
+    try {
+      const response = await axios.get(`${config.url}/api/json`, {
+        auth: { username: config.username, password: config.token },
+        timeout: 10000
+      })
+      return { success: true, version: response.data.version }
+    } catch (error) {
+      logger.error('Jenkins connection test failed:', error.message)
+      throw new Error('Failed to connect to Jenkins')
     }
   }
 
   async getJobs() {
+    const config = this.getConfig()
+    if (!config.enabled) {
+      throw new Error('Jenkins not configured')
+    }
+
     try {
-      const response = await axios.get(`${this.baseURL}/api/json`, {
-        auth: this.auth,
+      const response = await axios.get(`${config.url}/api/json`, {
+        auth: { username: config.username, password: config.token },
         params: { tree: 'jobs[name,color,lastBuild[number,timestamp,result,duration]]' }
       })
       return response.data.jobs
@@ -26,9 +44,10 @@ class JenkinsService {
   }
 
   async getJob(jobName) {
+    const config = this.getConfig()
     try {
-      const response = await axios.get(`${this.baseURL}/job/${jobName}/api/json`, {
-        auth: this.auth
+      const response = await axios.get(`${config.url}/job/${jobName}/api/json`, {
+        auth: { username: config.username, password: config.token }
       })
       return response.data
     } catch (error) {
@@ -38,13 +57,14 @@ class JenkinsService {
   }
 
   async buildJob(jobName, parameters = {}) {
+    const config = this.getConfig()
     try {
       const url = Object.keys(parameters).length > 0
-        ? `${this.baseURL}/job/${jobName}/buildWithParameters`
-        : `${this.baseURL}/job/${jobName}/build`
+        ? `${config.url}/job/${jobName}/buildWithParameters`
+        : `${config.url}/job/${jobName}/build`
 
       const response = await axios.post(url, parameters, {
-        auth: this.auth,
+        auth: { username: config.username, password: config.token },
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       })
 
@@ -56,9 +76,10 @@ class JenkinsService {
   }
 
   async getBuildStatus(jobName, buildNumber) {
+    const config = this.getConfig()
     try {
-      const response = await axios.get(`${this.baseURL}/job/${jobName}/${buildNumber}/api/json`, {
-        auth: this.auth
+      const response = await axios.get(`${config.url}/job/${jobName}/${buildNumber}/api/json`, {
+        auth: { username: config.username, password: config.token }
       })
       return response.data
     } catch (error) {
@@ -68,9 +89,10 @@ class JenkinsService {
   }
 
   async getBuildLog(jobName, buildNumber) {
+    const config = this.getConfig()
     try {
-      const response = await axios.get(`${this.baseURL}/job/${jobName}/${buildNumber}/consoleText`, {
-        auth: this.auth
+      const response = await axios.get(`${config.url}/job/${jobName}/${buildNumber}/consoleText`, {
+        auth: { username: config.username, password: config.token }
       })
       return response.data
     } catch (error) {

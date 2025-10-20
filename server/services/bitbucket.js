@@ -1,22 +1,39 @@
 const axios = require('axios')
 const logger = require('../logger')
+const configService = require('./config')
 
 class BitbucketService {
-  constructor() {
-    this.baseURL = process.env.BITBUCKET_URL || 'https://api.bitbucket.org/2.0'
-    this.username = process.env.BITBUCKET_USERNAME
-    this.appPassword = process.env.BITBUCKET_APP_PASSWORD
-    this.workspace = process.env.BITBUCKET_WORKSPACE
-    this.auth = {
-      username: this.username,
-      password: this.appPassword
+  getConfig() {
+    return configService.getBitbucketConfig()
+  }
+
+  async testConnection() {
+    const config = this.getConfig()
+    if (!config.enabled || !config.username) {
+      throw new Error('Bitbucket not configured')
+    }
+
+    try {
+      const response = await axios.get(`${config.url}/user`, {
+        auth: { username: config.username, password: config.appPassword },
+        timeout: 10000
+      })
+      return { success: true, user: response.data.display_name }
+    } catch (error) {
+      logger.error('Bitbucket connection test failed:', error.message)
+      throw new Error('Failed to connect to Bitbucket')
     }
   }
 
   async getRepositories() {
+    const config = this.getConfig()
+    if (!config.enabled) {
+      throw new Error('Bitbucket not configured')
+    }
+
     try {
-      const response = await axios.get(`${this.baseURL}/repositories/${this.workspace}`, {
-        auth: this.auth,
+      const response = await axios.get(`${config.url}/repositories/${config.workspace}`, {
+        auth: { username: config.username, password: config.appPassword },
         params: { pagelen: 100 }
       })
       return response.data.values
@@ -27,9 +44,10 @@ class BitbucketService {
   }
 
   async getRepository(repoName) {
+    const config = this.getConfig()
     try {
-      const response = await axios.get(`${this.baseURL}/repositories/${this.workspace}/${repoName}`, {
-        auth: this.auth
+      const response = await axios.get(`${config.url}/repositories/${config.workspace}/${repoName}`, {
+        auth: { username: config.username, password: config.appPassword }
       })
       return response.data
     } catch (error) {
@@ -39,9 +57,10 @@ class BitbucketService {
   }
 
   async getBranches(repoName) {
+    const config = this.getConfig()
     try {
-      const response = await axios.get(`${this.baseURL}/repositories/${this.workspace}/${repoName}/refs/branches`, {
-        auth: this.auth,
+      const response = await axios.get(`${config.url}/repositories/${config.workspace}/${repoName}/refs/branches`, {
+        auth: { username: config.username, password: config.appPassword },
         params: { pagelen: 100 }
       })
       return response.data.values
@@ -52,9 +71,10 @@ class BitbucketService {
   }
 
   async getCommits(repoName, branch = 'main') {
+    const config = this.getConfig()
     try {
-      const response = await axios.get(`${this.baseURL}/repositories/${this.workspace}/${repoName}/commits/${branch}`, {
-        auth: this.auth,
+      const response = await axios.get(`${config.url}/repositories/${config.workspace}/${repoName}/commits/${branch}`, {
+        auth: { username: config.username, password: config.appPassword },
         params: { pagelen: 10 }
       })
       return response.data.values
@@ -65,9 +85,10 @@ class BitbucketService {
   }
 
   async getFileContent(repoName, filePath, branch = 'main') {
+    const config = this.getConfig()
     try {
-      const response = await axios.get(`${this.baseURL}/repositories/${this.workspace}/${repoName}/src/${branch}/${filePath}`, {
-        auth: this.auth
+      const response = await axios.get(`${config.url}/repositories/${config.workspace}/${repoName}/src/${branch}/${filePath}`, {
+        auth: { username: config.username, password: config.appPassword }
       })
       return response.data
     } catch (error) {
@@ -77,9 +98,10 @@ class BitbucketService {
   }
 
   async createPullRequest(repoName, data) {
+    const config = this.getConfig()
     try {
-      const response = await axios.post(`${this.baseURL}/repositories/${this.workspace}/${repoName}/pullrequests`, data, {
-        auth: this.auth,
+      const response = await axios.post(`${config.url}/repositories/${config.workspace}/${repoName}/pullrequests`, data, {
+        auth: { username: config.username, password: config.appPassword },
         headers: { 'Content-Type': 'application/json' }
       })
       return response.data

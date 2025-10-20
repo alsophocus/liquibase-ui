@@ -22,12 +22,27 @@ const schemas = {
   environment: Joi.object({
     name: Joi.string().required(),
     description: Joi.string(),
-    dbType: Joi.string().valid('postgresql', 'mysql', 'oracle', 'sqlserver').required(),
+    type: Joi.string().valid('postgresql', 'mysql', 'oracle', 'sqlserver').required(),
     host: Joi.string().required(),
     port: Joi.number().integer().min(1).max(65535).required(),
     database: Joi.string().required(),
     username: Joi.string().required(),
     password: Joi.string().required()
+  }),
+
+  jenkins: Joi.object({
+    url: Joi.string().uri().required(),
+    username: Joi.string().required(),
+    token: Joi.string().required(),
+    enabled: Joi.boolean().default(true)
+  }),
+
+  bitbucket: Joi.object({
+    url: Joi.string().uri().default('https://api.bitbucket.org/2.0'),
+    username: Joi.string().required(),
+    appPassword: Joi.string().required(),
+    workspace: Joi.string().required(),
+    enabled: Joi.boolean().default(true)
   }),
 
   migration: Joi.object({

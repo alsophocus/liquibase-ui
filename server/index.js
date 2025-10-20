@@ -9,10 +9,147 @@ const fs = require('fs')
 // Load environment variables
 dotenv.config()
 
+// Configuration Routes
+app.get('/api/config', authMiddleware, (req, res) => {
+  try {
+    const config = configService.getConfig()
+    // Remove sensitive data from response
+    const safeConfig = {
+      database: {
+        ...config.database,
+        password: config.database.password ? '••••••••' : ''
+      },
+      jenkins: {
+        ...config.jenkins,
+        token: config.jenkins.token ? '••••••••' : ''
+      },
+      bitbucket: {
+        ...config.bitbucket,
+        appPassword: config.bitbucket.appPassword ? '••••••••' : ''
+      }
+    }
+    res.json(safeConfig)
+  } catch (error) {
+    logger.error('Failed to get configuration:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/config/database', authMiddleware, validate('environment'), async (req, res) => {
+  try {
+    const dbConfig = await configService.updateDatabaseConfig(req.body)
+    res.json({ message: 'Database configuration updated', config: { ...dbConfig, password: '••••••••' } })
+  } catch (error) {
+    logger.error('Failed to update database config:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/config/database/test', authMiddleware, validate('environment'), async (req, res) => {
+  try {
+    const result = await liquibaseService.testDatabaseConnection(req.body)
+    res.json(result)
+  } catch (error) {
+    logger.error('Database connection test failed:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/config/jenkins', authMiddleware, async (req, res) => {
+  try {
+    const { error } = schemas.jenkins.validate(req.body)
+    if (error) {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: error.details.map(detail => detail.message)
+      })
+    }
+
+    const jenkinsConfig = await configService.updateJenkinsConfig(req.body)
+    res.json({ message: 'Jenkins configuration updated', config: { ...jenkinsConfig, token: '••••••••' } })
+  } catch (error) {
+    logger.error('Failed to update Jenkins config:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/config/jenkins/test', authMiddleware, async (req, res) => {
+  try {
+    const { error } = schemas.jenkins.validate(req.body)
+    if (error) {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: error.details.map(detail => detail.message)
+      })
+    }
+
+    // Temporarily update config for testing
+    const originalConfig = configService.getJenkinsConfig()
+    await configService.updateJenkinsConfig(req.body)
+    
+    try {
+      const result = await jenkinsService.testConnection()
+      res.json(result)
+    } finally {
+      // Restore original config if test fails
+      await configService.updateJenkinsConfig(originalConfig)
+    }
+  } catch (error) {
+    logger.error('Jenkins connection test failed:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/config/bitbucket', authMiddleware, async (req, res) => {
+  try {
+    const { error } = schemas.bitbucket.validate(req.body)
+    if (error) {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: error.details.map(detail => detail.message)
+      })
+    }
+
+    const bitbucketConfig = await configService.updateBitbucketConfig(req.body)
+    res.json({ message: 'Bitbucket configuration updated', config: { ...bitbucketConfig, appPassword: '••••••••' } })
+  } catch (error) {
+    logger.error('Failed to update Bitbucket config:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+app.post('/api/config/bitbucket/test', authMiddleware, async (req, res) => {
+  try {
+    const { error } = schemas.bitbucket.validate(req.body)
+    if (error) {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: error.details.map(detail => detail.message)
+      })
+    }
+
+    // Temporarily update config for testing
+    const originalConfig = configService.getBitbucketConfig()
+    await configService.updateBitbucketConfig(req.body)
+    
+    try {
+      const result = await bitbucketService.testConnection()
+      res.json(result)
+    } finally {
+      // Restore original config if test fails
+      await configService.updateBitbucketConfig(originalConfig)
+    }
+  } catch (error) {
+    logger.error('Bitbucket connection test failed:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
 // Import services and middleware
 const logger = require('./logger')
 const { authMiddleware, authenticateUser, generateToken } = require('./auth')
-const { validate } = require('./validation')
+const { validate, schemas } = require('./validation')
+const configService = require('./services/config')
 const jenkinsService = require('./services/jenkins')
 const bitbucketService = require('./services/bitbucket')
 const liquibaseService = require('./services/liquibase')

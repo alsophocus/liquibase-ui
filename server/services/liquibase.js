@@ -1,12 +1,38 @@
 const { exec } = require('child_process')
 const { promisify } = require('util')
 const logger = require('../logger')
+const configService = require('./config')
 
 const execAsync = promisify(exec)
 
 class LiquibaseService {
   constructor() {
     this.liquibasePath = process.env.LIQUIBASE_PATH || 'liquibase'
+  }
+
+  getDatabaseConfig() {
+    return configService.getDatabaseConfig()
+  }
+
+  async testDatabaseConnection(dbConfig = null) {
+    const config = dbConfig || this.getDatabaseConfig()
+    
+    try {
+      const url = this.buildConnectionString(config)
+      const command = [
+        this.liquibasePath,
+        `--url=${url}`,
+        `--username=${config.username}`,
+        `--password=${config.password}`,
+        'status'
+      ].join(' ')
+
+      const result = await this.executeCommand(command)
+      return { success: result.success, message: 'Database connection successful' }
+    } catch (error) {
+      logger.error('Database connection test failed:', error.message)
+      throw new Error('Failed to connect to database')
+    }
   }
 
   async executeCommand(command, options = {}) {
@@ -45,13 +71,14 @@ class LiquibaseService {
     }
   }
 
-  async update(dbConfig, changelogFile, contexts = '') {
-    const url = this.buildConnectionString(dbConfig)
+  async update(changelogFile, contexts = '', dbConfig = null) {
+    const config = dbConfig || this.getDatabaseConfig()
+    const url = this.buildConnectionString(config)
     const command = [
       this.liquibasePath,
       `--url=${url}`,
-      `--username=${dbConfig.username}`,
-      `--password=${dbConfig.password}`,
+      `--username=${config.username}`,
+      `--password=${config.password}`,
       `--changeLogFile=${changelogFile}`,
       contexts ? `--contexts=${contexts}` : '',
       'update'
@@ -60,13 +87,14 @@ class LiquibaseService {
     return await this.executeCommand(command)
   }
 
-  async rollback(dbConfig, changelogFile, tag) {
-    const url = this.buildConnectionString(dbConfig)
+  async rollback(changelogFile, tag, dbConfig = null) {
+    const config = dbConfig || this.getDatabaseConfig()
+    const url = this.buildConnectionString(config)
     const command = [
       this.liquibasePath,
       `--url=${url}`,
-      `--username=${dbConfig.username}`,
-      `--password=${dbConfig.password}`,
+      `--username=${config.username}`,
+      `--password=${config.password}`,
       `--changeLogFile=${changelogFile}`,
       'rollback',
       tag
@@ -75,13 +103,14 @@ class LiquibaseService {
     return await this.executeCommand(command)
   }
 
-  async status(dbConfig, changelogFile) {
-    const url = this.buildConnectionString(dbConfig)
+  async status(changelogFile, dbConfig = null) {
+    const config = dbConfig || this.getDatabaseConfig()
+    const url = this.buildConnectionString(config)
     const command = [
       this.liquibasePath,
       `--url=${url}`,
-      `--username=${dbConfig.username}`,
-      `--password=${dbConfig.password}`,
+      `--username=${config.username}`,
+      `--password=${config.password}`,
       `--changeLogFile=${changelogFile}`,
       'status',
       '--verbose'
@@ -100,13 +129,14 @@ class LiquibaseService {
     return await this.executeCommand(command)
   }
 
-  async generateChangeLog(dbConfig, outputFile) {
-    const url = this.buildConnectionString(dbConfig)
+  async generateChangeLog(outputFile, dbConfig = null) {
+    const config = dbConfig || this.getDatabaseConfig()
+    const url = this.buildConnectionString(config)
     const command = [
       this.liquibasePath,
       `--url=${url}`,
-      `--username=${dbConfig.username}`,
-      `--password=${dbConfig.password}`,
+      `--username=${config.username}`,
+      `--password=${config.password}`,
       `--changeLogFile=${outputFile}`,
       'generateChangeLog'
     ].join(' ')
