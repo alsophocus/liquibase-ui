@@ -32,6 +32,25 @@ class ConfigService extends IConfigService {
         appPassword: process.env.BITBUCKET_APP_PASSWORD || '',
         workspace: process.env.BITBUCKET_WORKSPACE || '',
         enabled: !!process.env.BITBUCKET_USERNAME
+      },
+      saml: {
+        enabled: process.env.SAML_ENABLED === 'true' || false,
+        entryPoint: process.env.SAML_ENTRY_POINT || '',
+        issuer: process.env.SAML_ISSUER || 'liquibase-ui',
+        callbackUrl: process.env.SAML_CALLBACK_URL || 'http://localhost:3001/auth/saml/callback',
+        cert: process.env.SAML_CERT || '',
+        privateCert: process.env.SAML_PRIVATE_CERT || '',
+        identifierFormat: process.env.SAML_IDENTIFIER_FORMAT || 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+        attributeMapping: {
+          email: process.env.SAML_ATTR_EMAIL || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+          firstName: process.env.SAML_ATTR_FIRSTNAME || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+          lastName: process.env.SAML_ATTR_LASTNAME || 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+          groups: process.env.SAML_ATTR_GROUPS || 'http://schemas.microsoft.com/ws/2008/06/identity/claims/groups'
+        },
+        roleMapping: {
+          admin: (process.env.SAML_ADMIN_GROUPS || 'Liquibase-Admins,Domain Admins').split(','),
+          user: (process.env.SAML_USER_GROUPS || 'Liquibase-Users,Domain Users').split(',')
+        }
       }
     }
     this.loadConfig()
@@ -89,6 +108,16 @@ class ConfigService extends IConfigService {
 
   getJenkinsConfig() {
     return this.config.jenkins
+  }
+
+  async updateSAMLConfig(samlConfig) {
+    this.config.saml = { ...this.config.saml, ...samlConfig }
+    await this.saveConfig()
+    return this.config.saml
+  }
+
+  getSAMLConfig() {
+    return this.config.saml
   }
 
   getBitbucketConfig() {

@@ -12,7 +12,7 @@ dotenv.config()
 // Import DI container and setup
 const ServiceRegistry = require('./container/ServiceRegistry')
 const logger = require('./logger')
-const { authMiddleware, authenticateUser, generateToken } = require('./auth')
+const { authMiddleware, setupSession } = require('./auth')
 const { validate, schemas } = require('./validation')
 
 // Initialize dependency injection container
@@ -23,6 +23,7 @@ const configService = container.resolve('configService')
 const jenkinsService = container.resolve('jenkinsService')
 const bitbucketService = container.resolve('bitbucketService')
 const liquibaseService = container.resolve('liquibaseService')
+const samlService = container.resolve('samlService')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -38,6 +39,14 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3002',
   credentials: true
 }))
+
+// Setup session middleware for SAML
+setupSession(app)
+
+// Initialize SAML strategy
+samlService.initializeStrategy().catch(error => {
+  logger.error('Failed to initialize SAML strategy:', error)
+})
 
 // Rate limiting
 const limiter = rateLimit({
@@ -59,9 +68,14 @@ app.use((req, res, next) => {
 
 // Routes
 const createConfigRoutes = require('./routes/configRoutes')
+const createAuthRoutes = require('./routes/authRoutes')
 
 // Setup routes with dependency injection
 app.use('/api/config', createConfigRoutes(configService, jenkinsService, bitbucketService, liquibaseService))
+app.use('/auth', createAuthRoutes(configService, samlService))
+
+// Legacy auth routes for backward compatibility
+app.use('/api/auth', createAuthRoutes(configService, samlService))
 
 // Authentication Routes
 app.post('/api/auth/login', validate('login'), async (req, res) => {

@@ -6,6 +6,7 @@ const ConfigService = require('../services/ConfigService')
 const JenkinsService = require('../services/JenkinsService')
 const BitbucketService = require('../services/BitbucketService')
 const LiquibaseService = require('../services/LiquibaseService')
+const SAMLService = require('../services/SAMLService')
 
 /**
  * Service Registry - Configures Dependency Injection
@@ -31,6 +32,9 @@ class ServiceRegistry {
     container.registerSingleton('liquibaseService', (configService, databaseConnectionFactory) => 
       new LiquibaseService(configService, databaseConnectionFactory), 
       ['configService', 'databaseConnectionFactory'])
+
+    container.registerSingleton('samlService', (configService) => 
+      new SAMLService(configService), ['configService'])
 
     return container
   }
