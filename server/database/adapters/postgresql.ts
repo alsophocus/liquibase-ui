@@ -33,10 +33,10 @@ export class PostgreSQLAdapter implements DatabaseAdapter {
       return {
         rows: result.rows,
         rowCount: result.rowCount || 0,
-        fields: result.rows.length > 0 ? Object.keys(result.rows[0]) : []
+        fields: result.rows.length > 0 ? Object.keys(result.rows[0] as Record<string, any>) : []
       };
     } catch (error) {
-      throw new Error(`Query failed: ${error.message}`);
+      throw new Error(`Query failed: ${(error as Error).message}`);
     }
   }
 

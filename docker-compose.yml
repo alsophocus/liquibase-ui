@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  liquibase-ui:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://liquibase:password@postgres:5432/liquibase_db
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - liquibase-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=liquibase_db
+      - POSTGRES_USER=liquibase
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - liquibase-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - liquibase-ui
+    restart: unless-stopped
+    networks:
+      - liquibase-network
+
+volumes:
+  postgres_data:
+
+networks:
+  liquibase-network:
+    driver: bridge

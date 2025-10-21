@@ -1,13 +1,30 @@
 {
   "tasks": {
     "start": "deno run --allow-net --allow-read --allow-write --allow-env --allow-run main.ts",
-    "dev": "deno run --allow-net --allow-read --allow-write --allow-env --allow-run --watch main.ts"
+    "dev": "deno run --allow-net --allow-read --allow-write --allow-env --allow-run --watch main.ts",
+    "test": "deno test --allow-net --allow-read --allow-write --allow-env tests/",
+    "test:watch": "deno test --allow-net --allow-read --allow-write --allow-env --watch tests/",
+    "lint": "deno lint",
+    "fmt": "deno fmt",
+    "build": "deno compile --allow-net --allow-read --allow-write --allow-env --allow-run --output liquibase-ui main.ts"
   },
   "imports": {
     "oak": "https://deno.land/x/oak@v12.6.1/mod.ts",
     "cors": "https://deno.land/x/cors@v1.2.2/mod.ts",
-    "jwt": "https://deno.land/x/djwt@v3.0.1/mod.ts",
     "postgres": "https://deno.land/x/postgres@v0.17.0/mod.ts",
     "mysql": "https://deno.land/x/mysql@v2.12.1/mod.ts"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve"
   }
 }

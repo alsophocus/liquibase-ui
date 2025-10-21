@@ -34,7 +34,7 @@ export class MySQLAdapter implements DatabaseAdapter {
         fields: result.fields?.map(f => f.name) || []
       };
     } catch (error) {
-      throw new Error(`Query failed: ${error.message}`);
+      throw new Error(`Query failed: ${(error as Error).message}`);
     }
   }
 
