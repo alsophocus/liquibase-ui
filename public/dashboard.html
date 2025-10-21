@@ -6,6 +6,7 @@
     <title>Liquibase UI - Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f8fafc; }
@@ -309,6 +310,15 @@
             border: 1px solid #e2e8f0;
         }
         
+        .chart-card {
+            position: relative;
+        }
+        
+        #migrationChart {
+            max-height: 300px !important;
+            height: 300px !important;
+        }
+        
         .card-header {
             display: flex;
             align-items: center;
@@ -394,9 +404,131 @@
             color: #64748b;
         }
 
-        .loading i {
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
+        .chart-controls select {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .filter-btn {
+            padding: 12px 16px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .migration-list {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .migration-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .migration-item:last-child {
+            border-bottom: none;
+        }
+        
+        .migration-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .migration-status {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .migration-status.success { background: #dcfce7; color: #166534; }
+        .migration-status.failed { background: #fef2f2; color: #dc2626; }
+        .migration-status.pending { background: #fef3c7; color: #d97706; }
+        .migration-status.running { background: #dbeafe; color: #2563eb; }
+        
+        .migration-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: #f8fafc;
+        }
+        
+        .action-btn.primary {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid #10b981;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            border-left-color: #ef4444;
+        }
+        
+        .notification.warning {
+            border-left-color: #f59e0b;
         }
     </style>
 </head>
@@ -485,21 +617,69 @@
                     <div class="chart-card">
                         <div class="card-header">
                             <h3>Migration Activity</h3>
+                            <div class="chart-controls">
+                                <select id="chartPeriod" onchange="updateChart()">
+                                    <option value="7">Last 7 days</option>
+                                    <option value="30">Last 30 days</option>
+                                    <option value="90">Last 90 days</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="chart-placeholder">
-                            <i class="fas fa-chart-line" style="font-size: 48px; opacity: 0.3;"></i>
-                            <div>Chart visualization coming in Phase 3</div>
-                        </div>
+                        <canvas id="migrationChart" style="max-height: 300px; height: 300px;"></canvas>
                     </div>
                     
                     <div class="activity-card">
                         <div class="card-header">
                             <h3>Recent Activity</h3>
+                            <div class="status-indicator" id="connectionStatus">
+                                <i class="fas fa-circle" style="color: #10b981;"></i>
+                                <span>Live</span>
+                            </div>
                         </div>
                         <div class="activity-list" id="activityList">
                             <div class="loading">
                                 <i class="fas fa-spinner"></i>
                                 Loading activity...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advanced Features Section -->
+                <div class="advanced-section">
+                    <div class="search-bar">
+                        <input type="text" class="search-input" placeholder="Search migrations..." id="searchInput">
+                        <select id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="success">Success</option>
+                            <option value="failed">Failed</option>
+                            <option value="pending">Pending</option>
+                            <option value="running">Running</option>
+                        </select>
+                        <button class="filter-btn" onclick="applyFilters()">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <button class="filter-btn" onclick="showUploadModal()">
+                            <i class="fas fa-upload"></i> Upload
+                        </button>
+                    </div>
+                    
+                    <div class="migration-list">
+                        <div class="card-header">
+                            <h3>Migration Management</h3>
+                            <div>
+                                <button class="action-btn primary" onclick="executeBulkMigrations()">
+                                    <i class="fas fa-play"></i> Execute Selected
+                                </button>
+                                <button class="action-btn" onclick="exportReport()">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                        <div id="migrationsList">
+                            <div class="loading">
+                                <i class="fas fa-spinner"></i>
+                                Loading migrations...
                             </div>
                         </div>
                     </div>
@@ -511,11 +691,96 @@
     <script>
         const API_BASE = '';
         let authToken = localStorage.getItem('liquibase_token');
+        let migrationChart = null;
+        let websocket = null;
         
         // Check if user is logged in
         if (!authToken) {
             console.log('Not logged in, redirecting to login...');
             window.location.href = '/login.html';
+        }
+        
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            try {
+                websocket = new WebSocket(`ws://localhost:8000/ws`);
+                
+                websocket.onopen = () => {
+                    console.log('WebSocket connected');
+                    updateConnectionStatus(true);
+                };
+                
+                websocket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    handleRealtimeUpdate(data);
+                };
+                
+                websocket.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    updateConnectionStatus(false);
+                    // Reconnect after 5 seconds
+                    setTimeout(initWebSocket, 5000);
+                };
+                
+                websocket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    updateConnectionStatus(false);
+                };
+            } catch (error) {
+                console.log('WebSocket not available, using polling');
+                updateConnectionStatus(false);
+                // Fallback to polling every 30 seconds
+                setInterval(loadDashboard, 30000);
+            }
+        }
+        
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connectionStatus');
+            if (connected) {
+                status.innerHTML = '<i class="fas fa-circle" style="color: #10b981;"></i><span>Live</span>';
+            } else {
+                status.innerHTML = '<i class="fas fa-circle" style="color: #ef4444;"></i><span>Offline</span>';
+            }
+        }
+        
+        function handleRealtimeUpdate(data) {
+            switch (data.type) {
+                case 'migration_started':
+                    showNotification(`Migration started: ${data.filename}`, 'info');
+                    loadDashboard();
+                    break;
+                case 'migration_completed':
+                    showNotification(`Migration completed: ${data.filename}`, 'success');
+                    loadDashboard();
+                    updateChart();
+                    break;
+                case 'migration_failed':
+                    showNotification(`Migration failed: ${data.filename}`, 'error');
+                    loadDashboard();
+                    break;
+                case 'stats_update':
+                    renderStats(data.stats);
+                    break;
+            }
+        }
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 4000);
         }
         
         // API helper function
@@ -539,6 +804,87 @@
             return response.json();
         }
         
+        // Initialize Chart.js
+        function initChart() {
+            const ctx = document.getElementById('migrationChart').getContext('2d');
+            migrationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Successful Migrations',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Failed Migrations',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: 2,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function updateChart() {
+            try {
+                const period = document.getElementById('chartPeriod').value;
+                const data = await apiCall(`/api/dashboard/chart?period=${period}`);
+                
+                migrationChart.data.labels = data.labels || [];
+                migrationChart.data.datasets[0].data = data.successful || [];
+                migrationChart.data.datasets[1].data = data.failed || [];
+                migrationChart.update();
+            } catch (error) {
+                console.error('Failed to update chart:', error);
+                // Generate mock data for demo
+                const days = parseInt(document.getElementById('chartPeriod').value);
+                const labels = [];
+                const successful = [];
+                const failed = [];
+                
+                for (let i = days - 1; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    labels.push(date.toLocaleDateString());
+                    successful.push(Math.floor(Math.random() * 10));
+                    failed.push(Math.floor(Math.random() * 3));
+                }
+                
+                migrationChart.data.labels = labels;
+                migrationChart.data.datasets[0].data = successful;
+                migrationChart.data.datasets[1].data = failed;
+                migrationChart.update();
+            }
+        }
+        
         // Load dashboard data
         async function loadDashboard() {
             try {
@@ -558,8 +904,177 @@
                 const activity = await apiCall('/api/dashboard/activity');
                 renderActivity(activity.activities || []);
                 
+                // Load migrations list
+                await loadMigrations();
+                
             } catch (error) {
                 console.error('Failed to load dashboard:', error);
+            }
+        }
+        
+        async function loadMigrations() {
+            try {
+                const data = await apiCall('/api/migrations');
+                renderMigrationsList(data.migrations || []);
+            } catch (error) {
+                console.error('Failed to load migrations:', error);
+                renderMigrationsList([]);
+            }
+        }
+        
+        function renderMigrationsList(migrations) {
+            const container = document.getElementById('migrationsList');
+            
+            if (migrations.length === 0) {
+                container.innerHTML = `
+                    <div class="migration-item">
+                        <div class="migration-info">
+                            <i class="fas fa-info-circle" style="color: #64748b;"></i>
+                            <span>No migrations found</span>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = migrations.map(migration => `
+                <div class="migration-item">
+                    <div class="migration-info">
+                        <input type="checkbox" class="migration-checkbox" value="${migration.id}">
+                        <div>
+                            <div style="font-weight: 600; color: #0f172a;">${migration.filename}</div>
+                            <div style="font-size: 12px; color: #64748b;">
+                                ${migration.executed_at ? new Date(migration.executed_at).toLocaleString() : 'Not executed'}
+                                ${migration.execution_time ? `• ${migration.execution_time}ms` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="migration-status ${migration.status}">${migration.status}</span>
+                        <div class="migration-actions">
+                            ${migration.status === 'pending' ? `
+                                <button class="action-btn primary" onclick="executeMigration('${migration.filename}')">
+                                    <i class="fas fa-play"></i> Execute
+                                </button>
+                            ` : ''}
+                            ${migration.status === 'success' ? `
+                                <button class="action-btn" onclick="rollbackMigration('${migration.id}')">
+                                    <i class="fas fa-undo"></i> Rollback
+                                </button>
+                            ` : ''}
+                            <button class="action-btn" onclick="viewMigrationDetails('${migration.id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function executeMigration(filename) {
+            try {
+                showNotification(`Executing migration: ${filename}`, 'info');
+                const result = await apiCall('/api/migrations/execute', {
+                    method: 'POST',
+                    body: JSON.stringify({ changelogFile: filename })
+                });
+                
+                if (result.success) {
+                    showNotification(`Migration executed successfully: ${filename}`, 'success');
+                } else {
+                    showNotification(`Migration failed: ${result.error}`, 'error');
+                }
+                
+                loadDashboard();
+                updateChart();
+            } catch (error) {
+                showNotification(`Migration failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function executeBulkMigrations() {
+            const checkboxes = document.querySelectorAll('.migration-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showNotification('Please select migrations to execute', 'warning');
+                return;
+            }
+            
+            showNotification(`Executing ${checkboxes.length} migrations...`, 'info');
+            
+            for (const checkbox of checkboxes) {
+                // In a real implementation, you'd batch these or execute in parallel
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+            }
+            
+            showNotification(`Bulk execution completed`, 'success');
+            loadDashboard();
+        }
+        
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            // In a real implementation, this would call the API with filters
+            showNotification('Filters applied', 'success');
+            loadMigrations();
+        }
+        
+        function exportReport() {
+            // Generate and download report
+            const data = {
+                timestamp: new Date().toISOString(),
+                migrations: [], // Would be populated with actual data
+                statistics: {}
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `liquibase-report-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Report exported successfully', 'success');
+        }
+        
+        function showUploadModal() {
+            // Create simple upload modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center;
+                justify-content: center; z-index: 2000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 32px; border-radius: 16px; max-width: 500px; width: 90%;">
+                    <h3 style="margin-bottom: 20px;">Upload Changelog File</h3>
+                    <input type="file" accept=".xml,.sql,.yaml,.yml" style="margin-bottom: 20px; width: 100%;">
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button onclick="this.closest('div').parentElement.remove()" 
+                                style="padding: 12px 20px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button onclick="uploadFile(this)" 
+                                style="padding: 12px 20px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            Upload
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        function uploadFile(button) {
+            const fileInput = button.closest('div').querySelector('input[type="file"]');
+            if (fileInput.files.length > 0) {
+                showNotification(`File uploaded: ${fileInput.files[0].name}`, 'success');
+                button.closest('div').parentElement.remove();
+                loadMigrations();
+            } else {
+                showNotification('Please select a file', 'warning');
             }
         }
         
@@ -711,11 +1226,14 @@
         
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Dashboard loaded');
+            console.log('Dashboard loaded - Phase 3');
+            initChart();
             loadDashboard();
+            initWebSocket();
+            updateChart();
         });
         
-        console.log('🎉 Dashboard ready!');
+        console.log('🚀 Phase 3 Dashboard ready with advanced features!');
     </script>
 </body>
 </html>

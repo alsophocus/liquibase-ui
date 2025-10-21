@@ -4,6 +4,7 @@ import { authRouter } from "./server/routes/auth.ts";
 import { databaseRouter } from "./server/routes/database.ts";
 import { migrationRouter } from "./server/routes/migration.ts";
 import { staticRouter } from "./server/routes/static.ts";
+import { websocketRouter } from "./server/routes/websocket.ts";
 import { initializeDatabase } from "./server/services/database.ts";
 
 const app = new Application();
@@ -26,6 +27,7 @@ app.use(oakCors({
 app.use(authRouter.routes());
 app.use(databaseRouter.routes());
 app.use(migrationRouter.routes());
+app.use(websocketRouter.routes());
 app.use(staticRouter.routes());
 
 // Error handling
@@ -43,5 +45,6 @@ const PORT = 8000;
 console.log(`🚀 Liquibase UI Server running on http://localhost:${PORT}`);
 console.log(`📊 Dashboard: http://localhost:${PORT}/dashboard.html`);
 console.log(`🔐 Login: http://localhost:${PORT}/login.html`);
+console.log(`🔌 WebSocket: ws://localhost:${PORT}/ws`);
 
 await app.listen({ port: PORT });

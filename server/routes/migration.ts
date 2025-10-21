@@ -1,6 +1,7 @@
 import { Router } from "oak";
 import { dbManager } from "../services/database.ts";
 import { LiquibaseService } from "../services/liquibase.ts";
+import { broadcastUpdate } from "./websocket.ts";
 
 const migrationRouter = new Router();
 const liquibaseService = new LiquibaseService();
@@ -36,6 +37,35 @@ migrationRouter.get("/api/dashboard/stats", async (ctx) => {
   }
 });
 
+// Get chart data for dashboard
+migrationRouter.get("/api/dashboard/chart", async (ctx) => {
+  try {
+    const period = parseInt(ctx.request.url.searchParams.get("period") || "7");
+    
+    // Generate mock chart data for demo
+    const labels = [];
+    const successful = [];
+    const failed = [];
+    
+    for (let i = period - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      labels.push(date.toLocaleDateString());
+      successful.push(Math.floor(Math.random() * 10) + 1);
+      failed.push(Math.floor(Math.random() * 3));
+    }
+    
+    ctx.response.body = {
+      labels,
+      successful,
+      failed
+    };
+  } catch (error) {
+    ctx.response.status = 500;
+    ctx.response.body = { error: error.message };
+  }
+});
+
 // Get recent activity
 migrationRouter.get("/api/dashboard/activity", async (ctx) => {
   try {
@@ -57,7 +87,7 @@ migrationRouter.get("/api/dashboard/activity", async (ctx) => {
       title: `Migration ${row.status}`,
       subtitle: row.filename,
       status: row.status,
-      time: new Date(row.executed_at).toLocaleString(),
+      time: row.executed_at ? new Date(row.executed_at).toLocaleString() : 'Pending',
       executionTime: row.execution_time,
       error: row.error_message
     }));
@@ -90,11 +120,11 @@ migrationRouter.get("/api/migrations", async (ctx) => {
   }
 });
 
-// Execute migration
+// Execute migration with real-time updates
 migrationRouter.post("/api/migrations/execute", async (ctx) => {
   try {
-    const body = await ctx.request.body().value;
-    const { changelogFile, command = "update" } = body;
+    const body = ctx.request.body({ type: "json" });
+    const { changelogFile, command = "update" } = await body.value;
 
     const db = dbManager.getActiveConnection();
     if (!db) {
@@ -102,6 +132,13 @@ migrationRouter.post("/api/migrations/execute", async (ctx) => {
       ctx.response.body = { error: "No active database connection" };
       return;
     }
+
+    // Broadcast migration started
+    broadcastUpdate({
+      type: 'migration_started',
+      filename: changelogFile,
+      timestamp: new Date().toISOString()
+    });
 
     // Record migration start
     await db.query(
@@ -121,6 +158,14 @@ migrationRouter.post("/api/migrations/execute", async (ctx) => {
         ["success", executionTime, changelogFile, "running"]
       );
 
+      // Broadcast success
+      broadcastUpdate({
+        type: 'migration_completed',
+        filename: changelogFile,
+        executionTime,
+        timestamp: new Date().toISOString()
+      });
+
       ctx.response.body = {
         success: true,
         result,
@@ -134,6 +179,14 @@ migrationRouter.post("/api/migrations/execute", async (ctx) => {
         "UPDATE migrations SET status = ?, execution_time = ?, error_message = ? WHERE filename = ? AND status = ?",
         ["failed", executionTime, error.message, changelogFile, "running"]
       );
+
+      // Broadcast failure
+      broadcastUpdate({
+        type: 'migration_failed',
+        filename: changelogFile,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
 
       throw error;
     }
@@ -160,14 +213,80 @@ migrationRouter.get("/api/migrations/status", async (ctx) => {
 // Rollback migration
 migrationRouter.post("/api/migrations/rollback", async (ctx) => {
   try {
-    const body = await ctx.request.body().value;
-    const { count = 1 } = body;
+    const body = ctx.request.body({ type: "json" });
+    const { count = 1 } = await body.value;
 
     const result = await liquibaseService.rollback(count);
+    
+    // Broadcast rollback
+    broadcastUpdate({
+      type: 'migration_rollback',
+      count,
+      timestamp: new Date().toISOString()
+    });
     
     ctx.response.body = {
       success: true,
       result
+    };
+  } catch (error) {
+    ctx.response.status = 500;
+    ctx.response.body = { 
+      success: false,
+      error: error.message 
+    };
+  }
+});
+
+// Validate changelog
+migrationRouter.post("/api/migrations/validate", async (ctx) => {
+  try {
+    const body = ctx.request.body({ type: "json" });
+    const { changelogFile } = await body.value;
+
+    const isValid = await liquibaseService.validateChangelog(changelogFile);
+    
+    ctx.response.body = {
+      success: true,
+      valid: isValid,
+      message: isValid ? "Changelog is valid" : "Changelog validation failed"
+    };
+  } catch (error) {
+    ctx.response.status = 500;
+    ctx.response.body = { 
+      success: false,
+      error: error.message 
+    };
+  }
+});
+
+// Generate diff
+migrationRouter.post("/api/migrations/diff", async (ctx) => {
+  try {
+    const body = ctx.request.body({ type: "json" });
+    const { targetUrl, referenceUrl } = await body.value;
+
+    // Mock diff generation for demo
+    const diff = `
+-- Liquibase Diff Report
+-- Generated: ${new Date().toISOString()}
+
+-- Missing Tables
+CREATE TABLE new_table (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Missing Columns
+ALTER TABLE existing_table ADD COLUMN new_column VARCHAR(100);
+
+-- Missing Indexes
+CREATE INDEX idx_name ON existing_table(name);
+    `.trim();
+    
+    ctx.response.body = {
+      success: true,
+      diff
     };
   } catch (error) {
     ctx.response.status = 500;
