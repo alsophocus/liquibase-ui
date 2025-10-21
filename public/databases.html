@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquibase UI - Database Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="/shared/navigation.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .logo-mini {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .logo-text h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        
+        .logo-text span {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .nav-item:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        
+        .nav-item i {
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .app-header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 2px;
+        }
+        
+        .header-left span {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .content-area {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 32px;
+        }
+        
+        .page-title {
+            flex: 1;
+        }
+        
+        .page-title h2 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        
+        .page-title p {
+            color: #64748b;
+            font-size: 16px;
+        }
+        
+        .page-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5855eb;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8fafc;
+        }
+        
+        .database-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .database-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .database-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .database-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .database-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .database-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+        
+        .database-icon.postgresql { background: linear-gradient(135deg, #336791, #4a90a4); }
+        .database-icon.mysql { background: linear-gradient(135deg, #f29111, #f5a623); }
+        .database-icon.sqlite { background: linear-gradient(135deg, #003b57, #0f4c75); }
+        
+        .database-details h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+        
+        .database-details p {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .database-status {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .database-status.connected { background: #dcfce7; color: #166534; }
+        .database-status.disconnected { background: #fef2f2; color: #dc2626; }
+        .database-status.testing { background: #fef3c7; color: #d97706; }
+        
+        .database-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .meta-label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .meta-value {
+            font-size: 14px;
+            color: #0f172a;
+            font-weight: 500;
+        }
+        
+        .database-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            background: #f8fafc;
+        }
+        
+        .action-btn.primary {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+        
+        .action-btn.danger {
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+        
+        .action-btn.danger:hover {
+            background: #fef2f2;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            margin-bottom: 24px;
+        }
+        
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        
+        .modal-header p {
+            color: #64748b;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-mini">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="logo-text">
+                    <h3>Liquibase</h3>
+                    <span>Database Platform</span>
+                </div>
+            </div>
+            
+            <div class="nav-menu">
+                <div class="nav-item" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item active" data-page="databases">
+                    <i class="fas fa-server"></i>
+                    <span>Databases</span>
+                </div>
+                <div class="nav-item" data-page="migrations">
+                    <i class="fas fa-code-branch"></i>
+                    <span>Migrations</span>
+                </div>
+                <div class="nav-item" data-page="analytics">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Analytics</span>
+                </div>
+                <div class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-left">
+                    <h1>Database Management</h1>
+                    <span>Manage your database connections</span>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="content-area">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h2>Database Connections</h2>
+                        <p>Configure and manage your database connections for Liquibase migrations.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-secondary" onclick="testAllConnections()">
+                            <i class="fas fa-check-circle"></i> Test All
+                        </button>
+                        <button class="btn btn-primary" onclick="showAddDatabaseModal()">
+                            <i class="fas fa-plus"></i> Add Database
+                        </button>
+                    </div>
+                </div>
+
+                <div class="database-grid" id="databaseGrid">
+                    <!-- Database cards will be populated here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Database Modal -->
+    <div class="modal" id="addDatabaseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Database Connection</h3>
+                <p>Configure a new database connection for your Liquibase migrations.</p>
+            </div>
+            
+            <form id="addDatabaseForm">
+                <div class="form-group">
+                    <label for="dbName">Connection Name</label>
+                    <input type="text" id="dbName" class="form-input" placeholder="My Database" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dbType">Database Type</label>
+                    <select id="dbType" class="form-select" required>
+                        <option value="">Select database type</option>
+                        <option value="postgresql">PostgreSQL</option>
+                        <option value="mysql">MySQL</option>
+                        <option value="sqlite">SQLite</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dbHost">Host</label>
+                    <input type="text" id="dbHost" class="form-input" placeholder="localhost">
+                </div>
+                
+                <div class="form-group">
+                    <label for="dbPort">Port</label>
+                    <input type="number" id="dbPort" class="form-input" placeholder="5432">
+                </div>
+                
+                <div class="form-group">
+                    <label for="dbDatabase">Database Name</label>
+                    <input type="text" id="dbDatabase" class="form-input" placeholder="my_database" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dbUsername">Username</label>
+                    <input type="text" id="dbUsername" class="form-input" placeholder="username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="dbPassword">Password</label>
+                    <input type="password" id="dbPassword" class="form-input" placeholder="password">
+                </div>
+            </form>
+            
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeAddDatabaseModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="testConnection()">Test Connection</button>
+                <button class="btn btn-primary" onclick="addDatabase()">Add Database</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let authToken = localStorage.getItem('liquibase_token');
+        
+        // Check authentication
+        if (!authToken) {
+            window.location.href = '/login.html';
+        }
+        
+        // Sample database connections
+        const sampleDatabases = [
+            {
+                id: 'db1',
+                name: 'Production PostgreSQL',
+                type: 'postgresql',
+                host: 'prod-db.company.com',
+                port: 5432,
+                database: 'liquibase_prod',
+                username: 'liquibase_user',
+                status: 'connected',
+                lastConnected: '2 minutes ago',
+                migrations: 47
+            },
+            {
+                id: 'db2', 
+                name: 'Staging MySQL',
+                type: 'mysql',
+                host: 'staging-db.company.com',
+                port: 3306,
+                database: 'liquibase_staging',
+                username: 'staging_user',
+                status: 'connected',
+                lastConnected: '5 minutes ago',
+                migrations: 23
+            },
+            {
+                id: 'db3',
+                name: 'Local SQLite',
+                type: 'sqlite',
+                host: 'localhost',
+                port: null,
+                database: './local.db',
+                username: null,
+                status: 'disconnected',
+                lastConnected: '1 hour ago',
+                migrations: 12
+            }
+        ];
+        
+        function renderDatabases() {
+            const grid = document.getElementById('databaseGrid');
+            
+            grid.innerHTML = sampleDatabases.map(db => `
+                <div class="database-card">
+                    <div class="database-header">
+                        <div class="database-info">
+                            <div class="database-icon ${db.type}">
+                                <i class="fas fa-${getDatabaseIcon(db.type)}"></i>
+                            </div>
+                            <div class="database-details">
+                                <h3>${db.name}</h3>
+                                <p>${db.type.toUpperCase()} • ${db.host}${db.port ? ':' + db.port : ''}</p>
+                            </div>
+                        </div>
+                        <span class="database-status ${db.status}">${db.status}</span>
+                    </div>
+                    
+                    <div class="database-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Database</span>
+                            <span class="meta-value">${db.database}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Migrations</span>
+                            <span class="meta-value">${db.migrations}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Username</span>
+                            <span class="meta-value">${db.username || 'N/A'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Last Connected</span>
+                            <span class="meta-value">${db.lastConnected}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="database-actions">
+                        <button class="action-btn" onclick="testDatabase('${db.id}')">
+                            <i class="fas fa-check"></i> Test
+                        </button>
+                        <button class="action-btn primary" onclick="connectDatabase('${db.id}')">
+                            <i class="fas fa-plug"></i> Connect
+                        </button>
+                        <button class="action-btn" onclick="editDatabase('${db.id}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn danger" onclick="deleteDatabase('${db.id}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function getDatabaseIcon(type) {
+            switch (type) {
+                case 'postgresql': return 'elephant';
+                case 'mysql': return 'database';
+                case 'sqlite': return 'file-alt';
+                default: return 'server';
+            }
+        }
+        
+        function showAddDatabaseModal() {
+            document.getElementById('addDatabaseModal').classList.add('show');
+        }
+        
+        function closeAddDatabaseModal() {
+            document.getElementById('addDatabaseModal').classList.remove('show');
+            document.getElementById('addDatabaseForm').reset();
+        }
+        
+        function testConnection() {
+            // Simulate connection test
+            alert('Connection test successful!');
+        }
+        
+        function addDatabase() {
+            // Get form data and add to list
+            const form = document.getElementById('addDatabaseForm');
+            const formData = new FormData(form);
+            
+            alert('Database connection added successfully!');
+            closeAddDatabaseModal();
+            renderDatabases();
+        }
+        
+        function testDatabase(id) {
+            alert(`Testing connection for database ${id}...`);
+        }
+        
+        function connectDatabase(id) {
+            alert(`Connecting to database ${id}...`);
+        }
+        
+        function editDatabase(id) {
+            alert(`Editing database ${id}...`);
+        }
+        
+        function deleteDatabase(id) {
+            if (confirm('Are you sure you want to delete this database connection?')) {
+                alert(`Database ${id} deleted.`);
+                renderDatabases();
+            }
+        }
+        
+        function testAllConnections() {
+            alert('Testing all database connections...');
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            renderDatabases();
+        });
+        
+        console.log('🗄️ Database Management page ready!');
+    </script>
+</body>
+</html>

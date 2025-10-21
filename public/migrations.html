@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquibase UI - Migration Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="/shared/navigation.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        
+        .dashboard { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: white; border-right: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #e2e8f0; }
+        .logo-mini { width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #818cf8); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; }
+        .logo-text h3 { font-size: 18px; font-weight: 700; color: #0f172a; }
+        .logo-text span { font-size: 12px; color: #64748b; }
+        .nav-menu { display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; color: #64748b; font-weight: 500; }
+        .nav-item:hover { background: #f1f5f9; color: #0f172a; }
+        .nav-item.active { background: linear-gradient(135deg, #6366f1, #818cf8); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+        .nav-item i { font-size: 18px; width: 20px; text-align: center; }
+        .main-content { flex: 1; display: flex; flex-direction: column; }
+        .app-header { background: white; border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+        .header-left h1 { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+        .header-left span { font-size: 14px; color: #64748b; }
+        .content-area { flex: 1; padding: 24px; overflow-y: auto; }
+        
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+        .page-title h2 { font-size: 32px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+        .page-title p { color: #64748b; font-size: 16px; }
+        .page-actions { display: flex; gap: 12px; }
+        .btn { padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; border: none; font-size: 14px; }
+        .btn-primary { background: #6366f1; color: white; }
+        .btn-primary:hover { background: #5855eb; }
+        .btn-secondary { background: white; color: #64748b; border: 1px solid #e2e8f0; }
+        .btn-secondary:hover { background: #f8fafc; }
+        
+        .migration-filters { background: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        .filter-row { display: flex; gap: 16px; align-items: center; }
+        .filter-group { flex: 1; }
+        .filter-group label { display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
+        .filter-input, .filter-select { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; }
+        
+        .migration-timeline { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        .timeline-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .timeline-header h3 { font-size: 18px; font-weight: 700; color: #0f172a; }
+        
+        .timeline { position: relative; }
+        .timeline::before { content: ''; position: absolute; left: 20px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+        
+        .timeline-item { position: relative; padding-left: 60px; margin-bottom: 32px; }
+        .timeline-item::before { content: ''; position: absolute; left: 14px; top: 8px; width: 12px; height: 12px; border-radius: 50%; background: white; border: 3px solid #e2e8f0; }
+        .timeline-item.success::before { border-color: #10b981; background: #10b981; }
+        .timeline-item.failed::before { border-color: #ef4444; background: #ef4444; }
+        .timeline-item.pending::before { border-color: #f59e0b; background: #f59e0b; }
+        .timeline-item.running::before { border-color: #6366f1; background: #6366f1; animation: pulse 2s infinite; }
+        
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .migration-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+        .migration-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .migration-title { font-size: 16px; font-weight: 600; color: #0f172a; }
+        .migration-status { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        .migration-status.success { background: #dcfce7; color: #166534; }
+        .migration-status.failed { background: #fef2f2; color: #dc2626; }
+        .migration-status.pending { background: #fef3c7; color: #d97706; }
+        .migration-status.running { background: #dbeafe; color: #2563eb; }
+        
+        .migration-meta { display: flex; gap: 24px; font-size: 14px; color: #64748b; margin-bottom: 12px; }
+        .migration-description { font-size: 14px; color: #64748b; margin-bottom: 16px; }
+        .migration-actions { display: flex; gap: 8px; }
+        .action-btn { padding: 6px 12px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.2s ease; }
+        .action-btn:hover { background: #f8fafc; }
+        .action-btn.primary { background: #6366f1; color: white; border-color: #6366f1; }
+        .action-btn.danger { color: #dc2626; border-color: #fecaca; }
+        
+        .upload-area { border: 2px dashed #e2e8f0; border-radius: 8px; padding: 40px; text-align: center; margin: 20px 0; transition: all 0.2s ease; }
+        .upload-area:hover { border-color: #6366f1; background: #f8fafc; }
+        .upload-area.dragover { border-color: #6366f1; background: #eff6ff; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-mini"><i class="fas fa-database"></i></div>
+                <div class="logo-text"><h3>Liquibase</h3><span>Database Platform</span></div>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item" data-page="dashboard"><i class="fas fa-chart-line"></i><span>Dashboard</span></div>
+                <div class="nav-item" data-page="databases"><i class="fas fa-server"></i><span>Databases</span></div>
+                <div class="nav-item active" data-page="migrations"><i class="fas fa-code-branch"></i><span>Migrations</span></div>
+                <div class="nav-item" data-page="analytics"><i class="fas fa-chart-pie"></i><span>Analytics</span></div>
+                <div class="nav-item" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="app-header">
+                <div class="header-left">
+                    <h1>Migration Management</h1>
+                    <span>Manage your database migrations and changelog files</span>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div class="page-header">
+                    <div class="page-title">
+                        <h2>Migration Timeline</h2>
+                        <p>Track and manage your database migration history and execution.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-secondary" onclick="refreshMigrations()"><i class="fas fa-sync"></i> Refresh</button>
+                        <button class="btn btn-primary" onclick="showUploadModal()"><i class="fas fa-upload"></i> Upload Changelog</button>
+                    </div>
+                </div>
+
+                <div class="migration-filters">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Search Migrations</label>
+                            <input type="text" class="filter-input" placeholder="Search by filename or description..." id="searchFilter">
+                        </div>
+                        <div class="filter-group">
+                            <label>Status Filter</label>
+                            <select class="filter-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="success">Success</option>
+                                <option value="failed">Failed</option>
+                                <option value="pending">Pending</option>
+                                <option value="running">Running</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Date Range</label>
+                            <select class="filter-select" id="dateFilter">
+                                <option value="">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="migration-timeline">
+                    <div class="timeline-header">
+                        <h3>Migration History</h3>
+                        <span style="font-size: 14px; color: #64748b;">Showing 12 migrations</span>
+                    </div>
+                    
+                    <div class="timeline" id="migrationTimeline">
+                        <!-- Timeline items will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const sampleMigrations = [
+            { id: 1, filename: 'db.changelog-001-initial-schema.xml', status: 'success', author: 'admin', executedAt: '2025-10-21 09:15:00', executionTime: 245, description: 'Initial database schema with users and roles tables' },
+            { id: 2, filename: 'db.changelog-002-add-indexes.xml', status: 'success', author: 'admin', executedAt: '2025-10-21 09:10:00', executionTime: 123, description: 'Performance indexes for user queries' },
+            { id: 3, filename: 'db.changelog-003-audit-tables.xml', status: 'running', author: 'admin', executedAt: null, executionTime: null, description: 'Add audit logging tables for compliance' },
+            { id: 4, filename: 'db.changelog-004-user-preferences.xml', status: 'pending', author: 'developer', executedAt: null, executionTime: null, description: 'User preference and settings tables' },
+            { id: 5, filename: 'db.changelog-005-notifications.xml', status: 'failed', author: 'developer', executedAt: '2025-10-21 08:45:00', executionTime: 67, description: 'Notification system tables', error: 'Column already exists' }
+        ];
+
+        function renderMigrations() {
+            const timeline = document.getElementById('migrationTimeline');
+            timeline.innerHTML = sampleMigrations.map(migration => `
+                <div class="timeline-item ${migration.status}">
+                    <div class="migration-card">
+                        <div class="migration-header">
+                            <div class="migration-title">${migration.filename}</div>
+                            <span class="migration-status ${migration.status}">${migration.status.toUpperCase()}</span>
+                        </div>
+                        <div class="migration-meta">
+                            <span><i class="fas fa-user"></i> ${migration.author}</span>
+                            ${migration.executedAt ? `<span><i class="fas fa-clock"></i> ${migration.executedAt}</span>` : ''}
+                            ${migration.executionTime ? `<span><i class="fas fa-stopwatch"></i> ${migration.executionTime}ms</span>` : ''}
+                        </div>
+                        <div class="migration-description">${migration.description}</div>
+                        ${migration.error ? `<div style="color: #dc2626; font-size: 12px; margin-bottom: 12px;"><i class="fas fa-exclamation-triangle"></i> ${migration.error}</div>` : ''}
+                        <div class="migration-actions">
+                            ${migration.status === 'pending' ? '<button class="action-btn primary" onclick="executeMigration(' + migration.id + ')"><i class="fas fa-play"></i> Execute</button>' : ''}
+                            ${migration.status === 'success' ? '<button class="action-btn" onclick="rollbackMigration(' + migration.id + ')"><i class="fas fa-undo"></i> Rollback</button>' : ''}
+                            ${migration.status === 'failed' ? '<button class="action-btn primary" onclick="retryMigration(' + migration.id + ')"><i class="fas fa-redo"></i> Retry</button>' : ''}
+                            <button class="action-btn" onclick="viewMigration(' + migration.id + ')"><i class="fas fa-eye"></i> View</button>
+                            <button class="action-btn" onclick="downloadMigration(' + migration.id + ')"><i class="fas fa-download"></i> Download</button>
+                            ${migration.status === 'pending' ? '<button class="action-btn danger" onclick="deleteMigration(' + migration.id + ')"><i class="fas fa-trash"></i> Delete</button>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function executeMigration(id) { alert(`Executing migration ${id}...`); }
+        function rollbackMigration(id) { if(confirm('Are you sure you want to rollback this migration?')) alert(`Rolling back migration ${id}...`); }
+        function retryMigration(id) { alert(`Retrying migration ${id}...`); }
+        function viewMigration(id) { alert(`Viewing migration ${id} details...`); }
+        function downloadMigration(id) { alert(`Downloading migration ${id}...`); }
+        function deleteMigration(id) { if(confirm('Are you sure you want to delete this migration?')) alert(`Deleting migration ${id}...`); }
+        function refreshMigrations() { alert('Refreshing migrations...'); renderMigrations(); }
+        function applyFilters() { alert('Applying filters...'); }
+        function showUploadModal() { 
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 32px; border-radius: 16px; max-width: 500px; width: 90%;">
+                    <h3 style="margin-bottom: 20px;">Upload Changelog File</h3>
+                    <div class="upload-area" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #6366f1; margin-bottom: 16px;"></i>
+                        <p>Drag and drop your changelog file here</p>
+                        <p style="color: #64748b; font-size: 14px; margin-top: 8px;">or click to browse</p>
+                        <input type="file" accept=".xml,.sql,.yaml,.yml" style="margin-top: 16px;">
+                    </div>
+                    <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+                        <button onclick="this.closest('div').parentElement.remove()" style="padding: 12px 20px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; cursor: pointer;">Cancel</button>
+                        <button onclick="uploadFile(this)" style="padding: 12px 20px; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">Upload</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        function uploadFile(btn) { alert('File uploaded successfully!'); btn.closest('div').parentElement.remove(); }
+
+        document.addEventListener('DOMContentLoaded', renderMigrations);
+        console.log('📋 Migration Management page ready!');
+    </script>
+</body>
+</html>
