@@ -531,6 +531,96 @@
         .notification.warning {
             border-left-color: #f59e0b;
         }
+        
+        /* Multi-page content styles */
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+        .page-title h2 { font-size: 32px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+        .page-title p { color: #64748b; font-size: 16px; }
+        .page-actions { display: flex; gap: 12px; }
+        .btn { padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; border: none; font-size: 14px; }
+        .btn-primary { background: #6366f1; color: white; }
+        .btn-secondary { background: white; color: #64748b; border: 1px solid #e2e8f0; }
+        
+        .database-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px; }
+        .database-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }
+        .database-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .database-info { display: flex; align-items: center; gap: 12px; }
+        .database-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; }
+        .database-icon.postgresql { background: linear-gradient(135deg, #336791, #4a90a4); }
+        .database-details h3 { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .database-details p { font-size: 14px; color: #64748b; }
+        .database-status { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .database-status.connected { background: #dcfce7; color: #166534; }
+        .database-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .meta-item { display: flex; flex-direction: column; gap: 4px; }
+        .meta-label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+        .meta-value { font-size: 14px; color: #0f172a; font-weight: 500; }
+        .database-actions { display: flex; gap: 8px; }
+        
+        .migration-timeline { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        .timeline-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .timeline { position: relative; }
+        .timeline::before { content: ''; position: absolute; left: 20px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+        .timeline-item { position: relative; padding-left: 60px; margin-bottom: 32px; }
+        .timeline-item::before { content: ''; position: absolute; left: 14px; top: 8px; width: 12px; height: 12px; border-radius: 50%; background: white; border: 3px solid #e2e8f0; }
+        .timeline-item.success::before { border-color: #10b981; background: #10b981; }
+        .migration-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+        .migration-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .migration-title { font-size: 16px; font-weight: 600; color: #0f172a; }
+        .migration-status.success { background: #dcfce7; color: #166534; }
+        .migration-meta { display: flex; gap: 24px; font-size: 14px; color: #64748b; margin-bottom: 12px; }
+        .migration-description { font-size: 14px; color: #64748b; margin-bottom: 16px; }
+        
+        .analytics-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+        .analytics-title h2 { font-size: 32px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+        .analytics-title p { color: #64748b; font-size: 16px; }
+        .date-selector { display: flex; gap: 12px; align-items: center; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .metric-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        .metric-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .metric-title { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; }
+        .metric-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: white; }
+        .metric-icon.success { background: linear-gradient(135deg, #10b981, #34d399); }
+        .metric-icon.info { background: linear-gradient(135deg, #6366f1, #818cf8); }
+        .metric-value { font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+        .metric-change { display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; }
+        .metric-change.positive { color: #10b981; }
+        
+        .settings-layout { display: grid; grid-template-columns: 250px 1fr; gap: 32px; }
+        .settings-nav { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: fit-content; }
+        .settings-nav h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
+        .settings-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; color: #64748b; font-weight: 500; margin-bottom: 4px; }
+        .settings-nav-item.active { background: #eff6ff; color: #2563eb; }
+        .settings-content { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        .section-header { margin-bottom: 32px; }
+        .section-header h2 { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+        .section-header p { color: #64748b; font-size: 16px; }
+        .setting-group { margin-bottom: 32px; padding-bottom: 32px; border-bottom: 1px solid #f1f5f9; }
+        .setting-group h3 { font-size: 18px; font-weight: 600; color: #0f172a; margin-bottom: 16px; }
+        .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .setting-info { flex: 1; }
+        .setting-info h4 { font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
+        .setting-info p { font-size: 14px; color: #64748b; }
+        .setting-control { margin-left: 20px; }
+        .toggle-switch { position: relative; display: inline-block; width: 48px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e2e8f0; transition: .4s; border-radius: 24px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: #6366f1; }
+        input:checked + .toggle-slider:before { transform: translateX(24px); }
+        
+        /* Modal styles */
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 16px; padding: 32px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-header { margin-bottom: 24px; }
+        .modal-header h3 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+        .modal-header p { color: #64748b; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+        .form-input, .form-select { width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: all 0.2s ease; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
     </style>
 </head>
 <body>
@@ -1235,6 +1325,328 @@
         });
         
         console.log('🚀 Phase 3 Dashboard ready with advanced features!');
+        
+        // Database Management Functions
+        async function loadDatabases() {
+            try {
+                const response = await apiCall('/api/databases');
+                renderDatabaseGrid(response.connections || []);
+            } catch (error) {
+                console.error('Failed to load databases:', error);
+                renderDatabaseGrid([]);
+            }
+        }
+        
+        function renderDatabaseGrid(databases) {
+            const grid = document.getElementById('databaseGrid');
+            if (!grid) return;
+            
+            if (databases.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #64748b;">
+                        <i class="fas fa-database" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
+                        <h3 style="margin-bottom: 8px; color: #0f172a;">No database connections</h3>
+                        <p>Add your first database connection to get started.</p>
+                        <button class="btn btn-primary" onclick="window.showAddDatabaseModal()" style="margin-top: 16px;">
+                            <i class="fas fa-plus"></i> Add Database
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = databases.map(db => `
+                <div class="database-card">
+                    <div class="database-header">
+                        <div class="database-info">
+                            <div class="database-icon ${db.type}">
+                                <i class="fas fa-${getDatabaseIcon(db.type)}"></i>
+                            </div>
+                            <div class="database-details">
+                                <h3>${db.name}</h3>
+                                <p>${db.type.toUpperCase()}${db.host ? ' • ' + db.host : ''}${db.port ? ':' + db.port : ''}</p>
+                            </div>
+                        </div>
+                        <span class="database-status ${db.isActive ? 'connected' : 'disconnected'}">${db.isActive ? 'connected' : 'disconnected'}</span>
+                    </div>
+                    
+                    <div class="database-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Database</span>
+                            <span class="meta-value">${db.database}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Type</span>
+                            <span class="meta-value">${db.type}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Username</span>
+                            <span class="meta-value">${db.username || 'N/A'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Created</span>
+                            <span class="meta-value">${new Date(db.createdAt).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="database-actions">
+                        <button class="action-btn" onclick="window.testDatabase('${db.id}')">
+                            <i class="fas fa-check"></i> Test
+                        </button>
+                        <button class="action-btn ${db.isActive ? '' : 'primary'}" onclick="window.toggleDatabase('${db.id}')">
+                            <i class="fas fa-${db.isActive ? 'pause' : 'play'}"></i> ${db.isActive ? 'Disconnect' : 'Connect'}
+                        </button>
+                        <button class="action-btn" onclick="window.editDatabase('${db.id}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn danger" onclick="window.deleteDatabase('${db.id}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function getDatabaseIcon(type) {
+            switch (type) {
+                case 'postgresql': return 'elephant';
+                case 'mysql': return 'database';
+                case 'sqlite': return 'file-alt';
+                default: return 'server';
+            }
+        }
+        
+        function showAddDatabaseModal() {
+            const modal = document.getElementById('addDatabaseModal');
+            if (modal) {
+                modal.classList.add('show');
+                document.getElementById('dbType').value = '';
+                updateConnectionFields();
+            }
+        }
+        
+        function closeAddDatabaseModal() {
+            const modal = document.getElementById('addDatabaseModal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.getElementById('addDatabaseForm').reset();
+            }
+        }
+        
+        function updateConnectionFields() {
+            const dbType = document.getElementById('dbType').value;
+            const hostGroup = document.getElementById('hostGroup');
+            const portGroup = document.getElementById('portGroup');
+            const usernameGroup = document.getElementById('usernameGroup');
+            const passwordGroup = document.getElementById('passwordGroup');
+            const portInput = document.getElementById('dbPort');
+            
+            if (dbType === 'sqlite') {
+                hostGroup.style.display = 'none';
+                portGroup.style.display = 'none';
+                usernameGroup.style.display = 'none';
+                passwordGroup.style.display = 'none';
+            } else {
+                hostGroup.style.display = 'block';
+                portGroup.style.display = 'block';
+                usernameGroup.style.display = 'block';
+                passwordGroup.style.display = 'block';
+                
+                // Set default ports
+                if (dbType === 'postgresql') {
+                    portInput.placeholder = '5432';
+                } else if (dbType === 'mysql') {
+                    portInput.placeholder = '3306';
+                }
+            }
+        }
+        
+        async function testNewConnection() {
+            const form = document.getElementById('addDatabaseForm');
+            const formData = new FormData(form);
+            const testBtn = document.getElementById('testBtn');
+            
+            const connectionData = {
+                name: document.getElementById('dbName').value,
+                type: document.getElementById('dbType').value,
+                host: document.getElementById('dbHost').value,
+                port: parseInt(document.getElementById('dbPort').value) || null,
+                database: document.getElementById('dbDatabase').value,
+                username: document.getElementById('dbUsername').value,
+                password: document.getElementById('dbPassword').value
+            };
+            
+            if (!connectionData.name || !connectionData.type || !connectionData.database) {
+                showNotification('Please fill in required fields', 'error');
+                return;
+            }
+            
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+            
+            try {
+                const response = await apiCall('/api/databases/test', {
+                    method: 'POST',
+                    body: JSON.stringify(connectionData)
+                });
+                
+                if (response.success) {
+                    showNotification('Connection test successful!', 'success');
+                } else {
+                    showNotification(response.message || 'Connection test failed', 'error');
+                }
+            } catch (error) {
+                showNotification('Connection test failed: ' + error.message, 'error');
+            } finally {
+                testBtn.disabled = false;
+                testBtn.innerHTML = 'Test Connection';
+            }
+        }
+        
+        async function addDatabase() {
+            const connectionData = {
+                name: document.getElementById('dbName').value,
+                type: document.getElementById('dbType').value,
+                host: document.getElementById('dbHost').value,
+                port: parseInt(document.getElementById('dbPort').value) || null,
+                database: document.getElementById('dbDatabase').value,
+                username: document.getElementById('dbUsername').value,
+                password: document.getElementById('dbPassword').value
+            };
+            
+            if (!connectionData.name || !connectionData.type || !connectionData.database) {
+                showNotification('Please fill in required fields', 'error');
+                return;
+            }
+            
+            const addBtn = document.getElementById('addBtn');
+            addBtn.disabled = true;
+            addBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            
+            try {
+                const response = await apiCall('/api/databases', {
+                    method: 'POST',
+                    body: JSON.stringify(connectionData)
+                });
+                
+                if (response.success) {
+                    showNotification('Database connection added successfully!', 'success');
+                    closeAddDatabaseModal();
+                    loadDatabases();
+                } else {
+                    showNotification('Failed to add database connection', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to add database: ' + error.message, 'error');
+            } finally {
+                addBtn.disabled = false;
+                addBtn.innerHTML = 'Add Database';
+            }
+        }
+        
+        async function testDatabase(id) {
+            showNotification('Testing database connection...', 'info');
+            
+            try {
+                const response = await apiCall(`/api/databases/${id}/test`, {
+                    method: 'POST'
+                });
+                
+                if (response.success) {
+                    showNotification('Database connection test successful!', 'success');
+                } else {
+                    showNotification('Database connection test failed', 'error');
+                }
+            } catch (error) {
+                showNotification('Connection test failed: ' + error.message, 'error');
+            }
+        }
+        
+        async function toggleDatabase(id) {
+            try {
+                const response = await apiCall(`/api/databases/${id}/activate`, {
+                    method: 'POST'
+                });
+                
+                if (response.success) {
+                    showNotification(response.message || 'Database connection updated', 'success');
+                    loadDatabases();
+                } else {
+                    showNotification('Failed to update database connection', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to update database: ' + error.message, 'error');
+            }
+        }
+        
+        function editDatabase(id) {
+            showNotification('Edit functionality coming soon!', 'info');
+        }
+        
+        async function deleteDatabase(id) {
+            if (!confirm('Are you sure you want to delete this database connection? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await apiCall(`/api/databases/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.success) {
+                    showNotification('Database connection deleted successfully', 'success');
+                    loadDatabases();
+                } else {
+                    showNotification('Failed to delete database connection', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to delete database: ' + error.message, 'error');
+            }
+        }
+        
+        async function testAllConnections() {
+            showNotification('Testing all database connections...', 'info');
+            
+            try {
+                const response = await apiCall('/api/databases');
+                const databases = response.connections || [];
+                
+                let successCount = 0;
+                let failCount = 0;
+                
+                for (const db of databases) {
+                    try {
+                        const testResult = await apiCall(`/api/databases/${db.id}/test`, {
+                            method: 'POST'
+                        });
+                        if (testResult.success) {
+                            successCount++;
+                        } else {
+                            failCount++;
+                        }
+                    } catch {
+                        failCount++;
+                    }
+                }
+                
+                showNotification(`Test completed: ${successCount} successful, ${failCount} failed`, successCount > failCount ? 'success' : 'warning');
+            } catch (error) {
+                showNotification('Failed to test connections: ' + error.message, 'error');
+            }
+        }
+        
+        // Make functions globally available
+        window.loadDatabases = loadDatabases;
+        window.showAddDatabaseModal = showAddDatabaseModal;
+        window.closeAddDatabaseModal = closeAddDatabaseModal;
+        window.updateConnectionFields = updateConnectionFields;
+        window.testNewConnection = testNewConnection;
+        window.addDatabase = addDatabase;
+        window.testDatabase = testDatabase;
+        window.toggleDatabase = toggleDatabase;
+        window.editDatabase = editDatabase;
+        window.deleteDatabase = deleteDatabase;
+        window.testAllConnections = testAllConnections;
     </script>
 </body>
 </html>
